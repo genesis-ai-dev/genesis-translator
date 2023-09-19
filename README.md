@@ -69,3 +69,6 @@ You can author your README using Visual Studio Code. Here are some useful editor
 * [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
 **Enjoy!**
+
+
+You can manually run the task using the "Run Build Task" command (Ctrl+Shift+B or Cmd+Shift+B on Mac) in VS Code.
