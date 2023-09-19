@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-const awaitFetch = import('node-fetch');
+import { promptOllama } from './utils';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -22,44 +22,15 @@ export function activate(context: vscode.ExtensionContext) {
                 const uris = await vscode.workspace.findFiles(pattern, null, 1000);
                 for (const uri of uris) {
                     // Exclude folders and non-text files (by a simple extension check)
-                    if (uri.path.endsWith('.txt')) {
+                    if (uri.path.endsWith('.txt') || uri.path.endsWith('.md')) {
                         try {
                             // Read the file content
                             const fileContentUint8Array = await vscode.workspace.fs.readFile(uri);
                             const fileContent = new TextDecoder().decode(fileContentUint8Array);
-                            const fetch: any = await awaitFetch
-                            // Make POST request to the API
-                            const response = await fetch('http://localhost:11434/api/generate', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    model: "llama2",
-                                    prompt: fileContent
-                                })
-                            });
-							// const responseData = await response.json();
-                            // Get the response text
-							const responseText = await response.text();
-							let responseLines = responseText.split('\n');
-							let finalResponse = "";
-
-							responseLines.forEach((line:any) => {
-							if (line) {
-								let jsonResponse = JSON.parse(line);
-								if (jsonResponse.response) {
-								finalResponse += jsonResponse.response;
-								}
-								if (jsonResponse.done) {
-								// The operation is complete
-								console.log("Final response:", finalResponse);
-								}
-							}
-							});
+                            
 							// console.log(responseText);
 							// const responseData = JSON.parse(responseText);
-							const translatedContent = finalResponse;
+							const translatedContent = await promptOllama(fileContent);
 							// Append the translated content to the file.
 							const newContent = Buffer.from(fileContent + '\n' + translatedContent);
                             await vscode.workspace.fs.writeFile(uri, newContent);
