@@ -25,7 +25,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "format": "prettier --write ."
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
@@ -38,6 +39,7 @@
     "eslint": "^8.47.0",
     "glob": "^10.3.3",
     "mocha": "^10.2.0",
+    "prettier": "^3.0.3",
     "typescript": "^5.1.6"
   },
   "dependencies": {
