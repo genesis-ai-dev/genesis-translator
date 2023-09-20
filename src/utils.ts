@@ -7,9 +7,7 @@ export function parseApiResponse(response: string): {
   input: string[];
 } {
   try {
-    const match = response.match(
-        /Action:\s*\{\s*"name":\s*"(\w+)",\s*"input":\s*\[\s*"(.*?)",\s*"(.*?)"\s*\]\s*\}/s,
-    );
+    const match = response.match(/Action:\s*\{\s*"name":\s*"(\w+)",\s*"input":\s*\[(.*?)\]\s*\}/s);
     if (match) {
       const name = match[1];
       const input = match[2]
