@@ -5,7 +5,7 @@ const tectalicOpenai = require('@tectalic/openai').default;
 
 export function parseApiResponse(response: string): { name: string | null; input: string[] }{
     try {
-      const match = response.match(/Action:\s*\n\s*\{\s*"name":\s*"(\w+)",\s*"input":\s*\[([^\]]+)\]\s*\}/);
+      const match = response.match(/Action:\s*\{\s*"name":\s*"(\w+)",\s*"input":\s*\[(.*?)\]\s*\}/s);
       if (match) {
         const name = match[1];
         const input = match[2].split(',').map(item => item.trim().replace(/^"|"$/g, ''));
