@@ -16,6 +16,12 @@ if (!process.env.OPENAI_API_KEY) {
   throw new Error("Required environment variables are not set");
 }
 
+
+const tools = [
+  { name: "updateLexicon", input: ['old_string', 'new_string'] },
+  { name: "updateVerses", input: ['old_string', 'new_string'] }
+];
+
 // const userQuery = `The right way to say God is with an uppercase "G"`
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -25,8 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
     async () => {
       vscode.window
         .showInputBox({
-          prompt: "Enter some text",
-          placeHolder: "Your placeholder here",
+          prompt: "What can I help you with in your translation project?",
+          placeHolder: "Enter your instruction here",
         })
         .then(async (userQuery) => {
           if (userQuery === undefined || userQuery === "") {
@@ -39,8 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
                 const prompt = `
 							You are a helpful assistant. Try to answer the user query below by using one of your tools. Pay attention to the input required by each tool.
 							## Tools
-							{name: "updateLexicon", input: [old_string,new_string]}
-							{name: "updateVerses", input: [old_string,new_string]}
+							${tools.map((tool) => tool.name).join("\n")}
 							## Instruction
 							${userQuery}
 							Please use the following format in your response:
