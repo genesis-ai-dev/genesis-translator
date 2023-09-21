@@ -21,7 +21,7 @@ if (!process.env.OPENAI_API_KEY) {
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.commands.registerCommand(
-    "genesis-translator.helloWorld",
+    "genesis-translator.translatorsCopilot",
     async () => {
       vscode.window
         .showInputBox({
@@ -78,4 +78,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

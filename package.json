@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "genesis-translator.helloWorld",
-        "title": "Hello World"
+        "command": "genesis-translator.translatorsCopilot",
+        "title": "Translator's Copilot"
       }
     ]
   },
