@@ -45,6 +45,7 @@
   "dependencies": {
     "@tectalic/openai": "^0.3.1",
     "dotenv": "^16.3.1",
+    "json5": "^2.2.3",
     "node-fetch": "^2.7.0"
   }
 }

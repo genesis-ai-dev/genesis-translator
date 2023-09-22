@@ -1,20 +1,22 @@
 import * as vscode from "vscode";
+import { AgentFunctionName } from "./extension";
 
 const tectalicOpenai = require("@tectalic/openai").default;
 
 export function parseApiResponse(response: string): {
-  name: string | null;
+  name: AgentFunctionName | null;
   input: string[];
 } {
   try {
-    const match = response.match(/Action:\s*\{\s*"name":\s*"(\w+)",\s*"input":\s*\[(.*?)\]\s*\}/s);
-    if (match) {
-      const name = match[1];
-      const input = match[2]
-        .split(",")
-        .map((item) => item.trim().replace(/^"|"$/g, ""));
-      return { name, input };
+    const JSON5 = require("json5");
+    try {
+      const parsedObj = JSON5.parse(response);
+      console.log(parsedObj);
+      return parsedObj;
+    } catch (e) {
+      console.error("Failed to parse JSON:", e);
     }
+
     throw new Error("Could not parse response:" + response);
   } catch (error) {
     console.error("Error parsing response:", error);

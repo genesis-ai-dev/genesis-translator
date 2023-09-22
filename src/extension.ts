@@ -16,15 +16,28 @@ if (!process.env.OPENAI_API_KEY) {
   throw new Error("Required environment variables are not set");
 }
 
+export enum AgentFunctionName {
+  updateLexicon = "updateLexicon",
+  updateVerse = "updateVerse",
+}
 
 const tools = [
-  { name: "updateLexicon", input: ['old_string', 'new_string'] },
-  { name: "updateVerses", input: ['old_string', 'new_string'] }
+  {
+    name: AgentFunctionName.updateLexicon,
+    input: ["old_string", "new_string"],
+  },
+  { name: AgentFunctionName.updateVerse, input: ["old_string", "new_string"] },
 ];
 
-// const userQuery = `The right way to say God is with an uppercase "G"`
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+const agentFunctions: any = {
+  [AgentFunctionName.updateLexicon]: async function (
+    ...args: Parameters<typeof updateLexicon>
+  ) {
+    await updateLexicon(...args);
+    console.log("updateLexicon was called");
+  },
+};
+
 export function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.commands.registerCommand(
     "genesis-translator.translatorsCopilot",
@@ -39,8 +52,8 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage("No input provided");
           } else {
             if (vscode.workspace.workspaceFolders !== undefined) {
-              const rootPath = vscode.workspace.workspaceFolders[0].uri;
-              // const pattern = new vscode.RelativePattern(rootPath, '**/*');
+              //   const rootPath = vscode.workspace.workspaceFolders[0].uri;
+
               try {
                 const prompt = `
 							You are a helpful assistant. Try to answer the user query below by using one of your tools. Pay attention to the input required by each tool.
@@ -49,20 +62,38 @@ export function activate(context: vscode.ExtensionContext) {
 							## Instruction
 							${userQuery}
 							Please use the following format in your response:
-							Action:
-							{name: "tool you want to use", input: "input for tool"}
+							
+							/* Action: */
+							{name: "updateLexicon", input: ['jesus', 'Jesus']}
 							
 							
 							Only respond with a value that matches the Action above
 						`;
+                console.log({ prompt });
                 const agentOutput = await promptAgent(prompt);
                 const { name, input } = await parseApiResponse(agentOutput);
                 console.log({ name, input });
                 console.log({ agentOutput, prompt });
-                if (name === "updateLexicon") {
-                  vscode.window.showInformationMessage("Searching the Lexicon");
-                  await updateLexicon(input[0], input[1]);
+
+                if (!name) {
+                  vscode.window.showErrorMessage(
+                    "Agent did not return a tool name",
+                  );
+                  return;
                 }
+                const functionToCallBaseOnAgentResponse: (
+                  ...args: any
+                ) => Promise<any> | undefined = agentFunctions[name];
+
+                if (!functionToCallBaseOnAgentResponse) {
+                  vscode.window.showErrorMessage(
+                    "Agent returned an invalid tool name",
+                  );
+                  return;
+                }
+
+                await functionToCallBaseOnAgentResponse(...input);
+
                 vscode.window.showInformationMessage(
                   "Successfully processed files",
                 );
@@ -83,4 +114,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() {}
