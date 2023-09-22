@@ -94,3 +94,83 @@ export const updateLexicon = async (oldString: string, newString: string) => {
     vscode.window.showErrorMessage("No workspace found");
   }
 };
+interface Alignment {
+  "English phrase": string;
+  "Greek phrase"?: string;
+  "Hebrew phrase"?: string;
+}
+
+interface Verse {
+  vref: string;
+  alignments: Alignment[];
+}
+
+export const fetchVerse = async (targetVref: string) => {
+  if (vscode.workspace.workspaceFolders !== undefined) {
+    const rootPath = vscode.workspace.workspaceFolders[0].uri;
+    try {
+      const versesUri = vscode.Uri.joinPath(rootPath, "project/verses.jsonl");
+      const versesContentUint8Array =
+        await vscode.workspace.fs.readFile(versesUri);
+      const versesContent = new TextDecoder().decode(versesContentUint8Array);
+      const lines = versesContent?.split("\n");
+
+      for (const line of lines) {
+        const verse: Verse = JSON.parse(line);
+        if (verse.vref === targetVref) {
+          vscode.window.showInformationMessage(
+            `Found verse: ${JSON.stringify(verse)}`,
+          );
+          return verse;
+        }
+      }
+
+      vscode.window.showWarningMessage("Verse not found");
+      return null;
+    } catch (error: any) {
+      vscode.window.showErrorMessage("Error processing file: " + error.message);
+      return null;
+    }
+  } else {
+    vscode.window.showErrorMessage("No workspace found");
+    return null;
+  }
+};
+
+export const updateVerse = async (updatedVerse: Verse) => {
+  if (vscode.workspace.workspaceFolders !== undefined) {
+    const rootPath = vscode.workspace.workspaceFolders[0].uri;
+    try {
+      const versesUri = vscode.Uri.joinPath(rootPath, "project/verses.jsonl");
+      const versesContentUint8Array =
+        await vscode.workspace.fs.readFile(versesUri);
+      const versesContent = new TextDecoder().decode(versesContentUint8Array);
+      const lines = versesContent?.split("\n");
+
+      let verseUpdated = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const verse: Verse = JSON.parse(lines[i]);
+        if (verse.vref === updatedVerse.vref) {
+          lines[i] = JSON.stringify(updatedVerse);
+          verseUpdated = true;
+          break;
+        }
+      }
+
+      if (verseUpdated) {
+        const newContent = Buffer.from(lines.join("\n"));
+        await vscode.workspace.fs.writeFile(versesUri, newContent);
+        vscode.window.showInformationMessage(
+          `Successfully updated verse: ${updatedVerse.vref}`,
+        );
+      } else {
+        vscode.window.showWarningMessage("Verse not found. No updates made.");
+      }
+    } catch (error: any) {
+      vscode.window.showErrorMessage("Error processing file: " + error.message);
+    }
+  } else {
+    vscode.window.showErrorMessage("No workspace found");
+  }
+};
