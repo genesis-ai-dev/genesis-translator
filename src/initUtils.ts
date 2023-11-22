@@ -1,8 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as vscode from "vscode";
 import { getWorkSpaceFolder } from "./utils";
+import { copilotFIles } from "./filesToInit";
 const path = require("path");
 const { exec } = require("child_process");
+import { generateFiles } from "./fileUtils";
+
+export const copilotUtilsSubfolderName = `copilotUtils`;
 
 export const generatePythonEnv = async () => {
   const pythonInterpreter = "python3";
@@ -35,48 +39,16 @@ export const generatePythonEnv = async () => {
   );
 };
 
-export const generatePythonFiles = async () => {
-  const workspaceFolder = getWorkSpaceFolder();
+export const generateFilesInWorkspace = async (shouldOverWrite = false) => {
+  for (const file of Object.values(copilotFIles)) {
+    const { fileName, workspaceRelativeParentFolderFilepath, fileContent } =
+      file;
 
-  // After the virtual environment is created, write the embed.py script to a new file
-  const embedScript = `
-  from sentence_transformers import SentenceTransformer
-  import sys
-  import json
-  
-  def generate_embedding(text):
-      model = SentenceTransformer('paraphrase-albert-small-v2')
-      embedding = model.encode([text])
-      return embedding.tolist()
-  
-  if __name__ == "__main__":
-      text = sys.argv[1]
-      embedding = generate_embedding(text)
-      print(json.dumps(embedding))
-  `;
-  const newFilePath = vscode.Uri.file(path.join(workspaceFolder, "embed.py"));
-  const encoder = new TextEncoder();
-
-  vscode.workspace.fs.stat(newFilePath).then(
-    () => {
-      vscode.window.showInformationMessage("Python file already exists!");
-    },
-    (err) => {
-      vscode.workspace.fs
-        .writeFile(newFilePath, encoder.encode(embedScript))
-        .then(
-          () => {
-            vscode.window.showInformationMessage(
-              "New Python file created successfully!",
-            );
-          },
-          (err) => {
-            console.error(`Error: ${err}`);
-            vscode.window.showErrorMessage(
-              `Error creating new Python file: ${err.message}`,
-            );
-          },
-        );
-    },
-  );
+    await generateFiles({
+      fileName,
+      workspaceRelativeParentFolderFilepath,
+      fileContent,
+      shouldOverWrite,
+    });
+  }
 };

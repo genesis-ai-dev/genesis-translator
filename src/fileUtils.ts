@@ -4,12 +4,12 @@ import { getWorkSpaceFolder } from "./utils";
 const path = require("path");
 
 export const generateFiles = async ({
-  filePath,
+  workspaceRelativeParentFolderFilepath,
   fileName,
   fileContent,
   shouldOverWrite,
 }: {
-  filePath: string;
+  workspaceRelativeParentFolderFilepath?: string;
   fileName: string;
   fileContent: string;
   shouldOverWrite: boolean;
@@ -17,7 +17,14 @@ export const generateFiles = async ({
   const workspaceFolder = getWorkSpaceFolder();
 
   const newFilePath = vscode.Uri.file(
-    path.join(`${workspaceFolder}${filePath}`, fileName),
+    path.join(
+      `${workspaceFolder}${
+        workspaceRelativeParentFolderFilepath
+          ? `/${workspaceRelativeParentFolderFilepath}`
+          : ""
+      }`,
+      fileName,
+    ),
   );
   const encoder = new TextEncoder();
 

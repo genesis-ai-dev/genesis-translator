@@ -10,7 +10,7 @@ import {
   createFile,
 } from "./utils";
 import vectorizeResources from "./vectorization";
-import { generatePythonEnv, generatePythonFiles } from "./initUtils";
+import { generatePythonEnv, generateFilesInWorkspace } from "./initUtils";
 
 const dotenv = require("dotenv");
 const path = require("path");
@@ -188,7 +188,7 @@ export function activate(context: vscode.ExtensionContext) {
     "genesis-translator.helloWorld",
     async () => {
       await generatePythonEnv();
-      await generatePythonFiles();
+      await generateFilesInWorkspace();
       // // The code you place here will be executed every time your command is executed
       // // Create a new Python virtual environment in the project
       // const pythonInterpreter = "python3";

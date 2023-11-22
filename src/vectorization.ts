@@ -2,7 +2,8 @@ const lancedb = require("vectordb");
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as vscode from "vscode";
 import { getWorkSpaceFolder } from "./utils";
-
+import { copilotUtilsSubfolderName } from "./initUtils";
+import { copilotFIles } from "./filesToInit";
 
 async function vectorizeResources() {
   const workspaceFolder = getWorkSpaceFolder();
@@ -15,11 +16,10 @@ async function vectorizeResources() {
   for (const file of files) {
     const content = await vscode.workspace.fs.readFile(file);
     console.log({ file, content });
-
     // Process file to create a vector representation
     let vector: string = "";
     const pythonInterpreter = `${workspaceFolder}/myenv/bin/python`;
-    const command = `${pythonInterpreter} ${workspaceFolder}/embed.py "${content}"`;
+    const command = `${pythonInterpreter} ${workspaceFolder}/${copilotFIles.embedUtilFile.workspaceRelativeFilepath}"${content}"`;
     exec(command, (error: Error, stdout: string, stderr: string) => {
       if (error) {
         console.error(`Error: ${error}`);
