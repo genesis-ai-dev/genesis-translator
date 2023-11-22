@@ -16,6 +16,14 @@
       {
         "command": "genesis-translator.translatorsCopilot",
         "title": "Translator's Copilot"
+      },
+      {
+        "command": "genesis-translator.createVectorDB",
+        "title": "createVectorDB"
+      },
+      {
+        "command": "genesis-translator.helloWorld",
+        "title": "Hello World"
       }
     ]
   },

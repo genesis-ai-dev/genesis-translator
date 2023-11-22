@@ -3,6 +3,9 @@ import { AgentFunctionName } from "./extension";
 
 const tectalicOpenai = require("@tectalic/openai").default;
 
+const fs = require("fs");
+const path = require("path");
+
 export function parseApiResponse(response: string): {
   name: AgentFunctionName | null;
   input: string[];
@@ -46,6 +49,8 @@ export const promptAgent = async (prompt: string) => {
   const response = await createChatCompletionWithOpenAi(prompt);
   return response;
 };
+export const fetchVerse = async (prompt: string) => {};
+export const updateVerse = async (prompt: string) => {};
 
 export const updateLexicon = async (oldString: string, newString: string) => {
   if (vscode.workspace.workspaceFolders !== undefined) {
@@ -92,5 +97,25 @@ export const updateLexicon = async (oldString: string, newString: string) => {
     }
   } else {
     vscode.window.showErrorMessage("No workspace found");
+  }
+};
+
+export const createFile = async () => {
+  const folderPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath; // Get the path of the first workspace folder
+
+  if (folderPath) {
+    const filePath = path.join(folderPath, "newfile.txt"); // Define the file path
+
+    const fileUri = vscode.Uri.file(filePath); // Create a URI for the file
+    const data = Buffer.from("Hello, World!", "utf-8"); // Data to write in the file
+
+    vscode.workspace.fs.writeFile(fileUri, data).then(
+      () => {
+        vscode.window.showInformationMessage("File created successfully!");
+      },
+      (err) => {
+        vscode.window.showErrorMessage("Error creating file: " + err);
+      },
+    );
   }
 };
