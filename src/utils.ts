@@ -6,6 +6,17 @@ const tectalicOpenai = require("@tectalic/openai").default;
 const fs = require("fs");
 const path = require("path");
 
+export const getWorkSpaceFolder = () => {
+  const workspaceFolder = vscode.workspace.workspaceFolders
+    ? vscode.workspace.workspaceFolders[0].uri.fsPath
+    : null;
+  if (!workspaceFolder) {
+    vscode.window.showErrorMessage("No workspace found");
+    return;
+  }
+  return workspaceFolder;
+};
+
 export function parseApiResponse(response: string): {
   name: AgentFunctionName | null;
   input: string[];

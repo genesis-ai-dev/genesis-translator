@@ -10,6 +10,7 @@ import {
   createFile,
 } from "./utils";
 import vectorizeResources from "./vectorization";
+import { generatePythonEnv, generatePythonFiles } from "./initUtils";
 
 const dotenv = require("dotenv");
 const path = require("path");
@@ -186,31 +187,33 @@ export function activate(context: vscode.ExtensionContext) {
   let disposableThree = vscode.commands.registerCommand(
     "genesis-translator.helloWorld",
     async () => {
-      // The code you place here will be executed every time your command is executed
-      // Create a new Python virtual environment in the project
-      const pythonInterpreter = "python3";
-      const workspaceFolder = vscode.workspace.workspaceFolders
-        ? vscode.workspace.workspaceFolders[0].uri.fsPath
-        : null;
-      if (!workspaceFolder) {
-        vscode.window.showErrorMessage("No workspace found");
-        return;
-      }
-      const venvPath = path.join(workspaceFolder, "myenv");
-      const command = `${pythonInterpreter} -m venv ${venvPath}`;
+      await generatePythonEnv();
+      await generatePythonFiles();
+      // // The code you place here will be executed every time your command is executed
+      // // Create a new Python virtual environment in the project
+      // const pythonInterpreter = "python3";
+      // const workspaceFolder = vscode.workspace.workspaceFolders
+      //   ? vscode.workspace.workspaceFolders[0].uri.fsPath
+      //   : null;
+      // if (!workspaceFolder) {
+      //   vscode.window.showErrorMessage("No workspace found");
+      //   return;
+      // }
+      // const venvPath = path.join(workspaceFolder, "myenv");
+      // const command = `${pythonInterpreter} -m venv ${venvPath}`;
 
-      exec(command, (error: Error, stdout: string, stderr: string) => {
-        if (error) {
-          console.error(`Error: ${error}`);
-          vscode.window.showErrorMessage(
-            `Error creating Python virtual environment: ${error.message}`,
-          );
-        } else {
-          vscode.window.showInformationMessage(
-            "Python virtual environment created successfully!",
-          );
-        }
-      });
+      // exec(command, (error: Error, stdout: string, stderr: string) => {
+      //   if (error) {
+      //     console.error(`Error: ${error}`);
+      //     vscode.window.showErrorMessage(
+      //       `Error creating Python virtual environment: ${error.message}`,
+      //     );
+      //   } else {
+      //     vscode.window.showInformationMessage(
+      //       "Python virtual environment created successfully!",
+      //     );
+      //   }
+      // });
     },
   );
 
