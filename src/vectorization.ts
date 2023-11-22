@@ -35,7 +35,7 @@ const generatePythonEnv = async () => {
   });
 };
 
-const generatePythonFiles = async () => {
+export const generatePythonFiles = async () => {
   const workspaceFolder = getWorkSpaceFolder();
 
   // After the virtual environment is created, write the embed.py script to a new file
@@ -54,9 +54,7 @@ const generatePythonFiles = async () => {
         embedding = generate_embedding(text)
         print(json.dumps(embedding))
     `;
-  const newFilePath = vscode.Uri.file(
-    path.join(workspaceFolder, "new_embed.py"),
-  );
+  const newFilePath = vscode.Uri.file(path.join(workspaceFolder, "embed.py"));
   const encoder = new TextEncoder();
 
   vscode.workspace.fs.stat(newFilePath).then(
