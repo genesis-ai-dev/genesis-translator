@@ -36,41 +36,34 @@ const generatePythonEnv = async () => {
 };
 
 const generatePythonFiles = async () => {
-  const pythonInterpreter = "python3";
   const workspaceFolder = getWorkSpaceFolder();
-  const venvPath = path.join(workspaceFolder, "myenv");
-  const command = `${pythonInterpreter} -m venv ${venvPath}`;
 
-  exec(command, (error: Error, stdout: string, stderr: string) => {
-    if (error) {
-      console.error(`Error: ${error}`);
-      vscode.window.showErrorMessage(
-        `Error creating Python virtual environment: ${error.message}`,
-      );
-    } else {
-      vscode.window.showInformationMessage(
-        "Python virtual environment created successfully!",
-      );
-      // After the virtual environment is created, write the embed.py script to a new file
-      const embedScript = `
-        from sentence_transformers import SentenceTransformer
-        import sys
-        import json
+  // After the virtual environment is created, write the embed.py script to a new file
+  const embedScript = `
+    from sentence_transformers import SentenceTransformer
+    import sys
+    import json
 
-        def generate_embedding(text):
-            model = SentenceTransformer('paraphrase-albert-small-v2')
-            embedding = model.encode([text])
-            return embedding.tolist()
+    def generate_embedding(text):
+        model = SentenceTransformer('paraphrase-albert-small-v2')
+        embedding = model.encode([text])
+        return embedding.tolist()
 
-        if __name__ == "__main__":
-            text = sys.argv[1]
-            embedding = generate_embedding(text)
-            print(json.dumps(embedding))
-        `;
-      const newFilePath = vscode.Uri.file(
-        path.join(workspaceFolder, "new_embed.py"),
-      );
-      const encoder = new TextEncoder();
+    if __name__ == "__main__":
+        text = sys.argv[1]
+        embedding = generate_embedding(text)
+        print(json.dumps(embedding))
+    `;
+  const newFilePath = vscode.Uri.file(
+    path.join(workspaceFolder, "new_embed.py"),
+  );
+  const encoder = new TextEncoder();
+
+  vscode.workspace.fs.stat(newFilePath).then(
+    () => {
+      vscode.window.showInformationMessage("Python file already exists!");
+    },
+    (err) => {
       vscode.workspace.fs
         .writeFile(newFilePath, encoder.encode(embedScript))
         .then(
@@ -86,8 +79,8 @@ const generatePythonFiles = async () => {
             );
           },
         );
-    }
-  });
+    },
+  );
 };
 
 async function createVectorFromContent() {
