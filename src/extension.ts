@@ -9,7 +9,7 @@ import {
   updateVerse,
   createFile,
 } from "./utils";
-import vectorizeResources from "./vectorization";
+import vectorizeResources, { queryVectorizedResources } from "./vectorization";
 import { generatePythonEnv, generateFilesInWorkspace } from "./initUtils";
 
 const dotenv = require("dotenv");
@@ -187,8 +187,9 @@ export function activate(context: vscode.ExtensionContext) {
   let disposableThree = vscode.commands.registerCommand(
     "genesis-translator.helloWorld",
     async () => {
-      await generatePythonEnv();
-      await generateFilesInWorkspace();
+      await queryVectorizedResources("love");
+      // await generatePythonEnv();
+      // await generateFilesInWorkspace();
       // // The code you place here will be executed every time your command is executed
       // // Create a new Python virtual environment in the project
       // const pythonInterpreter = "python3";

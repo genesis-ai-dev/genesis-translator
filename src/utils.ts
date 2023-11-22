@@ -17,6 +17,11 @@ export const getWorkSpaceFolder = () => {
   return workspaceFolder;
 };
 
+export const getPythonInterpreter = () => {
+  const workspaceFolder = getWorkSpaceFolder();
+  const pythonInterpreter = `${workspaceFolder}/myenv/bin/python`;
+  return pythonInterpreter;
+};
 export function parseApiResponse(response: string): {
   name: AgentFunctionName | null;
   input: string[];
