@@ -40,46 +40,49 @@ function generateEmbedding(textToEmbed: string) {
 }
 
 async function vectorizeResources() {
-  const workspaceFolder = getWorkSpaceFolder();
-  const db = await lancedb.connect(`${workspaceFolder}/data/my_db`);
+  try {
+    const workspaceFolder = getWorkSpaceFolder();
+    const db = await lancedb.connect(`${workspaceFolder}/data/my_db`);
 
-  let files = await vscode.workspace.findFiles("**/resources/**/*");
+    let files = await vscode.workspace.findFiles("**/resources/**/*");
 
-  const { exec } = require("child_process");
-
-  for (const file of files) {
-    const content = await vscode.workspace.fs.readFile(file);
-    console.log({ file, content });
-    // Process file to create a vector representation
-    let vector: string = "";
-    const pythonInterpreter = getPythonInterpreter();
-    const command = `${pythonInterpreter} ${workspaceFolder}/${copilotFIles.embedUtilFile.workspaceRelativeFilepath}"${content}"`;
-    exec(command, (error: Error, stdout: string, stderr: string) => {
-      if (error) {
-        console.error(`Error: ${error}`);
-        return;
-      }
-      vector = JSON.parse(stdout);
-      console.log({ vector }, 1);
-    });
-    console.log({ vector }, 2);
-    if (vector) {
-      const table = await db.createTable(
-        file.path,
-        [{ path: file.path, vector: vector, content }],
+    const resourcesTable = await db.createTable(
+      "resources",
+      [
+        {
+          vector: [3.1, 4.1],
+          fileLineNumber: 0,
+          fileLineContent: "Hello World",
+          filePath: "none",
+        },
         { mode: "overwrite" },
-      );
-      const results = await table.search([100, 100]).limit(2).execute();
-      console.log({ results });
-      // await table.insert({ path: file.path, vector: vector, content });
+      ],
+      { mode: "overwrite" },
+    );
+    console.log({ resourcesTable });
+    for (const file of files) {
+      const content = await vscode.workspace.fs.readFile(file);
+      const lines = content.toString().split("\n");
+      console.log({ lines });
+      if (lines?.length > 0) {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const vector = await generateEmbedding(line);
+          console.log({ vector });
+          if (vector) {
+            await resourcesTable.add({
+              vector: vector,
+              fileLineNumber: i,
+              fileLineContent: line,
+              filePath: file.path,
+            });
+          }
+        }
+      }
     }
+  } catch (error) {
+    console.error(error, "ldaskjfo");
   }
-
-  // for (const file of files) {
-  //   const content = await vscode.workspace.fs.readFile(file);
-  //   // Process file to create a vector representation
-  //   await table.insert({ path: file.path, vector: vector });
-  // }
 }
 
 export async function queryVectorizedResources(queryString: string) {
@@ -89,50 +92,21 @@ export async function queryVectorizedResources(queryString: string) {
 
   let files = await vscode.workspace.findFiles("**/resources/**/*");
 
-  // const { exec } = require("child_process");
-
   for (const file of files) {
     const content = await vscode.workspace.fs.readFile(file);
     console.log("hf9uewhdcisj");
-    // try {
     const vector: any = await generateEmbedding(queryString);
     const parsedVec = vector;
     console.log("fidsoajodsjia");
     console.log({ file, content, vector, parsedVec });
-    // } catch (error) {
-    //   console.error(error);
-    // }
-    // Process file to create a vector representation
-    // let vector: string = "";
-    // const pythonInterpreter = getPythonInterpreter();
-    // const command = `${pythonInterpreter} ${workspaceFolder}/${copilotFIles.embedUtilFile.workspaceRelativeFilepath}"${queryString}"`;
-    // try {
-    //   const { stdout } = await exec(command);
-    //   console.log({ vector, stdout, queryString });
-    //   // Ensure stdout is a string before parsing
-    //   if (typeof stdout === "string") {
-    //     vector = JSON.parse(stdout);
-    //   } else {
-    //     console.error("stdout is not a string:", stdout);
-    //   }
-    //   // Rest of your code...
-    // } catch (error) {
-    //   console.error(`Error: ${error}`);
-    // }
+
     console.log({ vector }, 2);
     if (vector) {
-      const table = await db.openTable("my_table");
+      const table = await db.openTable("my_table"); // change this to an actual table
       const results = await table.search([100, 100]).limit(2).execute();
       console.log({ results });
-      // await table.insert({ path: file.path, vector: vector, content });
     }
   }
-
-  // for (const file of files) {
-  //   const content = await vscode.workspace.fs.readFile(file);
-  //   // Process file to create a vector representation
-  //   await table.insert({ path: file.path, vector: vector });
-  // }
 }
 
 export default vectorizeResources;
