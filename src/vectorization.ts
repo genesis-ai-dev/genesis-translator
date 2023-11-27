@@ -1,4 +1,5 @@
 const lancedb = require("vectordb");
+import { WriteMode } from "vectordb";
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as vscode from "vscode";
 import { getPythonInterpreter, getWorkSpaceFolder } from "./utils";
@@ -8,7 +9,7 @@ import { spawn } from "child_process";
 const workspaceFolder = getWorkSpaceFolder();
 const pythonInterpreter = getPythonInterpreter();
 
-function generateEmbedding(textToEmbed: string) {
+function generateEmbedding(textToEmbed: string): Promise<number[]> {
   return new Promise((resolve, reject) => {
     const command = `${pythonInterpreter} ${workspaceFolder}/${copilotFIles.embedUtilFile.workspaceRelativeFilepath} "${textToEmbed}"`;
 
@@ -29,7 +30,7 @@ function generateEmbedding(textToEmbed: string) {
         reject(new Error(`Python process exited with code ${code}`));
       } else {
         try {
-          const embedding = JSON.parse(output);
+          const embedding: number[] = JSON.parse(output);
           resolve(embedding);
         } catch (e) {
           reject(e);
@@ -39,25 +40,81 @@ function generateEmbedding(textToEmbed: string) {
   });
 }
 
+interface EmbedFunction {
+  (batch: string[]): Promise<number[][]>;
+}
+
+interface EmbedFun {
+  sourceColumn: string;
+  embed: EmbedFunction;
+}
+const embedFunctionJS: EmbedFun = {
+  sourceColumn: "text",
+  embed: async function (batch: string[]): Promise<number[][]> {
+    const { pipeline } = await import("@xenova/transformers");
+    const pipe = await pipeline(
+      "feature-extraction",
+      "Xenova/all-MiniLM-L6-v2",
+    );
+    let result: number[][] = [];
+    for (let text of batch) {
+      const res = await pipe(text, { pooling: "mean", normalize: true });
+      result.push(Array.from(res["data"]));
+    }
+    return result;
+  },
+};
+
+const embedFunctionPython: EmbedFun = {
+  sourceColumn: "text",
+  embed: async function (batch: string[]): Promise<number[][]> {
+    const { pipeline } = await import("@xenova/transformers");
+    const pipe = await pipeline(
+      "feature-extraction",
+      "Xenova/all-MiniLM-L6-v2",
+    );
+    let result: number[][] = [];
+    for (let text of batch) {
+      // const res = await pipe(text, { pooling: "mean", normalize: true });
+      const vector = await generateEmbedding(text);
+      result.push(Array.from(vector));
+    }
+    return result;
+  },
+};
 async function vectorizeResources() {
   try {
     const workspaceFolder = getWorkSpaceFolder();
     const db = await lancedb.connect(`${workspaceFolder}/data/my_db`);
 
     let files = await vscode.workspace.findFiles("**/resources/**/*");
-
+    console.log("dsjhfiou4");
+    // const resourcesTable = await db.createTable(
+    //   "resources",
+    //   [
+    //     {
+    //       vector: [3.1, 4.1],
+    //       fileLineNumber: 0,
+    //       fileLineContent: "Hello World",
+    //       filePath: "none",
+    //     },
+    //   ],
+    //   "overwrite",
+    // );
     const resourcesTable = await db.createTable(
       "resources",
       [
         {
-          vector: [3.1, 4.1],
+          vector: await generateEmbedding("Hello World"),
           fileLineNumber: 0,
           fileLineContent: "Hello World",
           filePath: "none",
         },
-        { mode: "overwrite" },
       ],
-      { mode: "overwrite" },
+      embedFunctionPython,
+      {
+        writeMode: WriteMode.Overwrite,
+      },
     );
     console.log({ resourcesTable });
     for (const file of files) {
@@ -71,7 +128,7 @@ async function vectorizeResources() {
           console.log({ vector });
           if (vector) {
             await resourcesTable.add({
-              vector: vector,
+              vector: vector[0],
               fileLineNumber: i,
               fileLineContent: line,
               filePath: file.path,
