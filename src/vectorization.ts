@@ -1,5 +1,12 @@
 const lancedb = require("vectordb");
-import { WriteMode } from "vectordb";
+import {
+  CreateTableOptions,
+  EmbeddingFunction,
+  Table,
+  WriteMode,
+  Connection,
+} from "vectordb";
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as vscode from "vscode";
 import { getPythonInterpreter, getWorkSpaceFolder } from "./utils";
@@ -9,9 +16,14 @@ import { spawn } from "child_process";
 const workspaceFolder = getWorkSpaceFolder();
 const pythonInterpreter = getPythonInterpreter();
 
-function generateEmbedding(textToEmbed: string): Promise<number[]> {
+function generateEmbedding(textToEmbed: string): Promise<[number[]]> {
+  console.log({ textToEmbed });
+  const sanitizedTextToEmbed = textToEmbed
+    ?.replace(/\\/g, "\\\\")
+    ?.replace(/"/g, '\\"')
+    ?.replace(/\$/g, "\\$");
   return new Promise((resolve, reject) => {
-    const command = `${pythonInterpreter} ${workspaceFolder}/${copilotFIles.embedUtilFile.workspaceRelativeFilepath} "${textToEmbed}"`;
+    const command = `${pythonInterpreter} ${workspaceFolder}/${copilotFIles.embedUtilFile.workspaceRelativeFilepath} "${sanitizedTextToEmbed}"`;
 
     const pythonProcess = spawn(command, { shell: true });
     // const pythonProcess = spawn('python', ['path/to/your_script.py', text]);
@@ -30,7 +42,7 @@ function generateEmbedding(textToEmbed: string): Promise<number[]> {
         reject(new Error(`Python process exited with code ${code}`));
       } else {
         try {
-          const embedding: number[] = JSON.parse(output);
+          const embedding: [number[]] = JSON.parse(output);
           resolve(embedding);
         } catch (e) {
           reject(e);
@@ -40,44 +52,56 @@ function generateEmbedding(textToEmbed: string): Promise<number[]> {
   });
 }
 
-interface EmbedFunction {
-  (batch: string[]): Promise<number[][]>;
-}
+// interface EmbedFunction extends EmbeddingFunction<string[]> {
+//   sourceColumn: string;
+// }
 
-interface EmbedFun {
-  sourceColumn: string;
-  embed: EmbedFunction;
-}
-const embedFunctionJS: EmbedFun = {
-  sourceColumn: "text",
-  embed: async function (batch: string[]): Promise<number[][]> {
-    const { pipeline } = await import("@xenova/transformers");
-    const pipe = await pipeline(
-      "feature-extraction",
-      "Xenova/all-MiniLM-L6-v2",
-    );
-    let result: number[][] = [];
-    for (let text of batch) {
-      const res = await pipe(text, { pooling: "mean", normalize: true });
-      result.push(Array.from(res["data"]));
-    }
-    return result;
-  },
-};
+// interface EmbeddingFunction {
+//   sourceColumn: string;
+//   embed: EmbedFunction;
+// }
+// const embedFunctionJS: EmbeddingFunction<string> = {
+//   sourceColumn: "text",
+//   embed: async function (batch): Promise<number[][]> {
+//     const { pipeline } = await import("@xenova/transformers");
+//     const pipe = await pipeline(
+//       "feature-extraction",
+//       "Xenova/all-MiniLM-L6-v2",
+//     );
+//     let result: number[][] = [];
+//     for (let text of batch) {
+//       const res = await pipe(text, { pooling: "mean", normalize: true });
+//       result.push(Array.from(res["data"]));
+//     }
+//     return result;
+//   },
+// };
 
-const embedFunctionPython: EmbedFun = {
+const embedFunctionPython: EmbeddingFunction<{
+  vector: number[];
+  fileLineNumber: number;
+  fileLineContent: string;
+  filePath: string;
+}> = {
   sourceColumn: "text",
-  embed: async function (batch: string[]): Promise<number[][]> {
-    const { pipeline } = await import("@xenova/transformers");
-    const pipe = await pipeline(
-      "feature-extraction",
-      "Xenova/all-MiniLM-L6-v2",
-    );
+  embed: async function (
+    batch: {
+      vector: number[];
+      fileLineNumber: number;
+      fileLineContent: string;
+      filePath: string;
+    }[],
+  ): Promise<number[][]> {
+    // const { pipeline } = await import("@xenova/transformers");
+    // const pipe = await pipeline(
+    //   "feature-extraction",
+    //   "Xenova/all-MiniLM-L6-v2",
+    // );
     let result: number[][] = [];
     for (let text of batch) {
       // const res = await pipe(text, { pooling: "mean", normalize: true });
-      const vector = await generateEmbedding(text);
-      result.push(Array.from(vector));
+      const vector = await generateEmbedding(text.fileLineContent);
+      result.push(Array.from(vector[0]));
     }
     return result;
   },
@@ -85,7 +109,9 @@ const embedFunctionPython: EmbedFun = {
 async function vectorizeResources() {
   try {
     const workspaceFolder = getWorkSpaceFolder();
-    const db = await lancedb.connect(`${workspaceFolder}/data/my_db`);
+    const db: Connection = await lancedb.connect(
+      `${workspaceFolder}/data/my_db`,
+    );
 
     let files = await vscode.workspace.findFiles("**/resources/**/*");
     console.log("dsjhfiou4");
@@ -101,42 +127,50 @@ async function vectorizeResources() {
     //   ],
     //   "overwrite",
     // );
+    const data = [];
+    for (const file of files) {
+      const content = await vscode.workspace.fs.readFile(file);
+      const lines = content.toString().split("\n");
+      if (lines?.length > 0) {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          console.log({ line });
+          const vector = await generateEmbedding(line);
+          // console.log({ vector, line, i });
+          // if (vector) {
+          // await resourcesTable.add({
+          //   // @ts-ignore
+          data.push({
+            vector: vector[0],
+            fileLineNumber: i,
+            fileLineContent: line,
+            filePath: file.path,
+          });
+          // });
+          // }
+        }
+      }
+    }
     const resourcesTable = await db.createTable(
       "resources",
-      [
-        {
-          vector: await generateEmbedding("Hello World"),
-          fileLineNumber: 0,
-          fileLineContent: "Hello World",
-          filePath: "none",
-        },
-      ],
+      data,
       embedFunctionPython,
       {
         writeMode: WriteMode.Overwrite,
       },
     );
+    // const resourcesTable = await db.createTable<{
+    //   vector: number[];
+    //   fileLineNumber: number;
+    //   fileLineContent: string;
+    //   filePath: string;
+    // }>({
+    //   name: "resources",
+    //   data,
+    //   embeddingFunction: embedFunctionPython,
+    //   writeOptions: { writeMode: WriteMode.Overwrite },
+    // });
     console.log({ resourcesTable });
-    for (const file of files) {
-      const content = await vscode.workspace.fs.readFile(file);
-      const lines = content.toString().split("\n");
-      console.log({ lines });
-      if (lines?.length > 0) {
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const vector = await generateEmbedding(line);
-          console.log({ vector });
-          if (vector) {
-            await resourcesTable.add({
-              vector: vector[0],
-              fileLineNumber: i,
-              fileLineContent: line,
-              filePath: file.path,
-            });
-          }
-        }
-      }
-    }
   } catch (error) {
     console.error(error, "ldaskjfo");
   }
@@ -144,7 +178,7 @@ async function vectorizeResources() {
 
 export async function queryVectorizedResources(queryString: string) {
   const workspaceFolder = getWorkSpaceFolder();
-  const db = await lancedb.connect(`${workspaceFolder}/data/my_db`);
+  const db: Connection = await lancedb.connect(`${workspaceFolder}/data/my_db`);
   console.log(await db.tableNames());
 
   let files = await vscode.workspace.findFiles("**/resources/**/*");
@@ -157,10 +191,18 @@ export async function queryVectorizedResources(queryString: string) {
     console.log("fidsoajodsjia");
     console.log({ file, content, vector, parsedVec });
 
-    console.log({ vector }, 2);
+    console.log({ vector, queryString }, 2);
     if (vector) {
-      const table = await db.openTable("my_table"); // change this to an actual table
-      const results = await table.search([100, 100]).limit(2).execute();
+      const table = await db.openTable("resources", embedFunctionPython); // change this to an actual table
+      const results = await table
+        .search({
+          fileLineContent: queryString,
+          filePath: "",
+          fileLineNumber: 0,
+          vector: vector,
+        })
+        .limit(2)
+        .execute();
       console.log({ results });
     }
   }

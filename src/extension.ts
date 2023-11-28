@@ -183,11 +183,24 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage("Vectorization Complete");
     },
   );
-  const { exec } = require("child_process");
+  // const { exec } = require("child_process");
   let disposableThree = vscode.commands.registerCommand(
-    "genesis-translator.helloWorld",
+    "genesis-translator.askResources",
     async () => {
-      await queryVectorizedResources("love");
+      vscode.window
+        .showInputBox({
+          prompt: "What Kind of information are you looking for?",
+          placeHolder: "Enter your instruction here",
+        })
+        .then(async (userQuery) => {
+          if (userQuery) {
+            await queryVectorizedResources(userQuery);
+          } else {
+            vscode.window.showInformationMessage(
+              "Type something in the prompt silly :)",
+            );
+          }
+        });
       // await generatePythonEnv();
       // await generateFilesInWorkspace();
       // // The code you place here will be executed every time your command is executed

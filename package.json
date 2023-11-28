@@ -22,8 +22,8 @@
         "title": "createVectorDB"
       },
       {
-        "command": "genesis-translator.helloWorld",
-        "title": "Hello World"
+        "command": "genesis-translator.askResources",
+        "title": "Ask Resources"
       }
     ]
   },
@@ -52,8 +52,10 @@
   },
   "dependencies": {
     "@tectalic/openai": "^0.3.1",
+    "@xenova/transformers": "^2.9.0",
     "dotenv": "^16.3.1",
     "json5": "^2.2.3",
+    "langchain": "^0.0.197-rc.1",
     "node-fetch": "^2.7.0"
   }
 }
