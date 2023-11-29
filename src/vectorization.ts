@@ -134,7 +134,10 @@ async function vectorizeResources() {
       if (lines?.length > 0) {
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          console.log({ line });
+          console.log({
+            line,
+            finePath: file.path.replace(workspaceFolder || "", ""),
+          });
           const vector = await generateEmbedding(line);
           // console.log({ vector, line, i });
           // if (vector) {
@@ -144,7 +147,7 @@ async function vectorizeResources() {
             vector: vector[0],
             fileLineNumber: i,
             fileLineContent: line,
-            filePath: file.path,
+            filePath: file.path.replace(workspaceFolder || "", ""),
           });
           // });
           // }
