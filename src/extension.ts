@@ -225,14 +225,6 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  const selectionCodeLensProvider = new SelectionCodeLensProvider();
-  let providerDisposable = vscode.languages.registerCodeLensProvider(
-    "*",
-    selectionCodeLensProvider,
-  );
-
-  context.subscriptions.push(providerDisposable);
-
   let disposable = vscode.commands.registerCommand(
     "extension.processSelection",
     function (selectedText) {
@@ -241,23 +233,24 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  // context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable);
 
-  context.subscriptions.push(
-    vscode.languages.registerCodeLensProvider(
-      "*",
-      new SelectionCodeLensProvider(),
-    ),
+  // Register the CodeLens provider
+  const selectionCodeLensProvider = new SelectionCodeLensProvider();
+  let providerDisposable = vscode.languages.registerCodeLensProvider(
+    "*",
+    selectionCodeLensProvider,
   );
-  vscode.window.onDidChangeTextEditorSelection(
-    (event) => {
+  context.subscriptions.push(providerDisposable);
+
+  // Set up the event listener for selection changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection((event) => {
       if (event.textEditor === vscode.window.activeTextEditor) {
         // Refresh CodeLens
         selectionCodeLensProvider.onDidChangeCodeLensesEmitter.fire();
       }
-    },
-    null,
-    context.subscriptions,
+    }),
   );
   context.subscriptions.push(disposableThree);
 
@@ -266,32 +259,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(createVectorDB);
 
   context.subscriptions.push(editFilesCommand);
-
-  //   let disposable = vscode.commands.registerCommand('extension.analyzeText', async () => {
-  //     // Get the active editor
-  //     let editor = vscode.window.activeTextEditor;
-  //     if (editor) {
-  //         // Get the selection
-  //         let selection = editor.selection;
-  //         let text = editor.document.getText(selection);
-
-  //         if (text) {
-  //             // Send the text to your API
-  //             try {
-  //                 let response = await axios.post('https://your-api-url.com/analyze', { text });
-  //                 // Handle the API response (maybe show the analysis results in a message box)
-  //                 vscode.window.showInformationMessage('Analysis Result: ' + response.data);
-  //             } catch (error) {
-  //                 // Handle errors
-  //                 vscode.window.showErrorMessage('Error analyzing text: ' + error.message);
-  //             }
-  //         } else {
-  //             vscode.window.showInformationMessage('No text selected');
-  //         }
-  //     }
-  // });
-
-  // context.subscriptions.push(disposable);
 }
 
 // This method is called when your extension is deactivated
