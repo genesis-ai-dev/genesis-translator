@@ -11,6 +11,10 @@ import {
 } from "./utils";
 import vectorizeResources, { queryVectorizedResources } from "./vectorization";
 import { generatePythonEnv, generateFilesInWorkspace } from "./initUtils";
+import {
+  SelectionCodeLensProvider,
+  showDiffWithOriginal,
+} from "./projectEditingTools";
 
 const dotenv = require("dotenv");
 const path = require("path");
@@ -183,6 +187,23 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage("Vectorization Complete");
     },
   );
+
+  let editFilesCommand = vscode.commands.registerCommand(
+    "genesis-translator.editFiles",
+    async () => {
+      showDiffWithOriginal("/resources/lexicon.tsv");
+      // vscode.window.showInformationMessage("Vectorizing Resources");
+      // try {
+      //   await vectorizeResources();
+      // } catch (error) {
+      //   console.error(error);
+      // }
+      // vscode.window.showInformationMessage(
+      //   "Hello World from translation-test!",
+      // );
+      // vscode.window.showInformationMessage("Vectorization Complete");
+    },
+  );
   // const { exec } = require("child_process");
   let disposableThree = vscode.commands.registerCommand(
     "genesis-translator.askResources",
@@ -201,43 +222,50 @@ export function activate(context: vscode.ExtensionContext) {
             );
           }
         });
-      // await generatePythonEnv();
-      // await generateFilesInWorkspace();
-      // // The code you place here will be executed every time your command is executed
-      // // Create a new Python virtual environment in the project
-      // const pythonInterpreter = "python3";
-      // const workspaceFolder = vscode.workspace.workspaceFolders
-      //   ? vscode.workspace.workspaceFolders[0].uri.fsPath
-      //   : null;
-      // if (!workspaceFolder) {
-      //   vscode.window.showErrorMessage("No workspace found");
-      //   return;
-      // }
-      // const venvPath = path.join(workspaceFolder, "myenv");
-      // const command = `${pythonInterpreter} -m venv ${venvPath}`;
-
-      // exec(command, (error: Error, stdout: string, stderr: string) => {
-      //   if (error) {
-      //     console.error(`Error: ${error}`);
-      //     vscode.window.showErrorMessage(
-      //       `Error creating Python virtual environment: ${error.message}`,
-      //     );
-      //   } else {
-      //     vscode.window.showInformationMessage(
-      //       "Python virtual environment created successfully!",
-      //     );
-      //   }
-      // });
     },
   );
 
-  // add a new command that
+  const selectionCodeLensProvider = new SelectionCodeLensProvider();
+  let providerDisposable = vscode.languages.registerCodeLensProvider(
+    "*",
+    selectionCodeLensProvider,
+  );
 
+  context.subscriptions.push(providerDisposable);
+
+  let disposable = vscode.commands.registerCommand(
+    "extension.processSelection",
+    function (selectedText) {
+      // Process the selected text as required
+      vscode.window.showInformationMessage(`Selected text: ${selectedText}`);
+    },
+  );
+
+  // context.subscriptions.push(disposable);
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      "*",
+      new SelectionCodeLensProvider(),
+    ),
+  );
+  vscode.window.onDidChangeTextEditorSelection(
+    (event) => {
+      if (event.textEditor === vscode.window.activeTextEditor) {
+        // Refresh CodeLens
+        selectionCodeLensProvider.onDidChangeCodeLensesEmitter.fire();
+      }
+    },
+    null,
+    context.subscriptions,
+  );
   context.subscriptions.push(disposableThree);
 
   context.subscriptions.push(translatorsCopilot);
 
   context.subscriptions.push(createVectorDB);
+
+  context.subscriptions.push(editFilesCommand);
 
   //   let disposable = vscode.commands.registerCommand('extension.analyzeText', async () => {
   //     // Get the active editor

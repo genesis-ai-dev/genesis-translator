@@ -196,7 +196,7 @@ export async function queryVectorizedResources(queryString: string) {
 
     console.log({ vector, queryString }, 2);
     if (vector) {
-      const table = await db.openTable("resources", embedFunctionPython); // change this to an actual table
+      const table = await db.openTable("resources", embedFunctionPython);
       const results = await table
         .search({
           fileLineContent: queryString,

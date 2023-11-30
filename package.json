@@ -22,8 +22,16 @@
         "title": "createVectorDB"
       },
       {
+        "command": "genesis-translator.editFiles",
+        "title": "editFiles"
+      },
+      {
         "command": "genesis-translator.askResources",
         "title": "Ask Resources"
+      },
+      {
+        "command": "extension.processSelection",
+        "title": "Process Selected Text"
       }
     ]
   },
