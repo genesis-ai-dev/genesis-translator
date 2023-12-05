@@ -12,10 +12,13 @@ import {
 import vectorizeResources, { queryVectorizedResources } from "./vectorization";
 import { generatePythonEnv, generateFilesInWorkspace } from "./initUtils";
 import {
+  CodeLensArgs,
   SelectionCodeLensProvider,
+  editFile,
   showDiffWithOriginal,
 } from "./projectEditingTools";
 
+const grammar = require("usfm-grammar");
 const dotenv = require("dotenv");
 const path = require("path");
 
@@ -226,14 +229,63 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   let disposable = vscode.commands.registerCommand(
-    "extension.processSelection",
-    function (selectedText) {
+    "genesis-translator.processSelection",
+    function (codeLensArgs: CodeLensArgs) {
       // Process the selected text as required
-      vscode.window.showInformationMessage(`Selected text: ${selectedText}`);
+      vscode.window.showInformationMessage(
+        `Selected text: ${codeLensArgs.currentText}`,
+      );
+
+      editFile({
+        fileUri: codeLensArgs.document.uri,
+        positionRange: codeLensArgs.positionRange,
+        newContent: "test content",
+      });
     },
   );
 
   context.subscriptions.push(disposable);
+
+  let disposable2 = vscode.commands.registerCommand(
+    "genesis-translator.openUsfmConverter",
+    async () => {
+      const options: vscode.OpenDialogOptions = {
+        canSelectMany: false,
+        canSelectFolders: true,
+        canSelectFiles: false,
+        openLabel: "Open",
+      };
+
+      vscode.window.showOpenDialog(options).then((folderUri) => {
+        if (folderUri && folderUri[0]) {
+          console.log("Selected file: " + folderUri[0].fsPath);
+          const conversionOptions = [
+            "USFM to JSON",
+            "JSON to USFM",
+            "Export to CSV",
+          ];
+          vscode.window
+            .showQuickPick(conversionOptions, {
+              placeHolder: "Choose conversion option",
+            })
+            .then((selectedOption) => {
+              console.log({ selectedOption });
+              // Handle the selected option
+              const myUsfmParser = new grammar.USFMParser("usfmText");
+
+              const jsonOutput = myUsfmParser.toJSON();
+              vscode.workspace
+                .openTextDocument({ content: jsonOutput, language: "json" })
+                .then((doc) => vscode.window.showTextDocument(doc));
+            });
+        }
+      });
+
+      // Implement file picker logic here
+    },
+  );
+
+  context.subscriptions.push(disposable2);
 
   // Register the CodeLens provider
   const selectionCodeLensProvider = new SelectionCodeLensProvider();
@@ -246,9 +298,12 @@ export function activate(context: vscode.ExtensionContext) {
   // Set up the event listener for selection changes
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((event) => {
+      // console.log({ event });
       if (event.textEditor === vscode.window.activeTextEditor) {
         // Refresh CodeLens
-        selectionCodeLensProvider.onDidChangeCodeLensesEmitter.fire();
+        selectionCodeLensProvider.onDidChangeCodeLensesEmitter.fire(
+          event.textEditor.document,
+        );
       }
     }),
   );
