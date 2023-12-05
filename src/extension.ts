@@ -17,6 +17,7 @@ import {
   editFile,
   showDiffWithOriginal,
 } from "./projectEditingTools";
+import { generateFiles } from "./fileUtils";
 
 const grammar = require("usfm-grammar");
 const dotenv = require("dotenv");
@@ -246,7 +247,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable);
 
-  let disposable2 = vscode.commands.registerCommand(
+  let openUsfmConverterCommand = vscode.commands.registerCommand(
     "genesis-translator.openUsfmConverter",
     async () => {
       const options: vscode.OpenDialogOptions = {
@@ -271,12 +272,50 @@ export function activate(context: vscode.ExtensionContext) {
             .then((selectedOption) => {
               console.log({ selectedOption });
               // Handle the selected option
-              const myUsfmParser = new grammar.USFMParser("usfmText");
+              if (selectedOption === "USFM to JSON") {
+                const fs = require("fs");
+                const path = require("path");
+                const directoryPath = folderUri[0].fsPath;
+                fs.readdir(
+                  directoryPath,
+                  async function (err: any, files: any) {
+                    if (err) {
+                      return console.log("Unable to scan directory: " + err);
+                    }
+                    for (const file of files) {
+                      if (
+                        path.extname(file) === ".SFM" ||
+                        path.extname(file) === ".sfm"
+                      ) {
+                        fs.readFile(
+                          path.join(directoryPath, file),
+                          "utf8",
+                          async function (err: any, contents: any) {
+                            console.log({ contents });
+                            const myUsfmParser = new grammar.USFMParser(
+                              contents,
+                            );
 
-              const jsonOutput = myUsfmParser.toJSON();
-              vscode.workspace
-                .openTextDocument({ content: jsonOutput, language: "json" })
-                .then((doc) => vscode.window.showTextDocument(doc));
+                            const jsonOutput: JSON = myUsfmParser.toJSON();
+                            console.log({ jsonOutput });
+                            const fileName =
+                              path.basename(file, path.extname(file)) + ".json";
+                            console.log({ fileName }, path.extname(file));
+
+                            await generateFiles({
+                              workspaceRelativeParentFolderFilepath:
+                                "importedProject",
+                              fileName: fileName,
+                              fileContent: JSON.stringify(jsonOutput),
+                              shouldOverWrite: true,
+                            });
+                          },
+                        );
+                      }
+                    }
+                  },
+                );
+              }
             });
         }
       });
@@ -285,7 +324,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  context.subscriptions.push(disposable2);
+  context.subscriptions.push(openUsfmConverterCommand);
 
   // Register the CodeLens provider
   const selectionCodeLensProvider = new SelectionCodeLensProvider();
