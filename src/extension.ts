@@ -94,6 +94,7 @@ enum CommandName {
   createVectorDB = "createVectorDB",
   initFiles = "initFiles",
   editFiles = "editFiles",
+  askResources = "askResources",
 }
 
 const registerCommand = ({
@@ -230,9 +231,10 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
 
-  let disposableThree = vscode.commands.registerCommand(
-    "genesis-translator.askResources",
-    async () => {
+  registerCommand({
+    context,
+    commandName: CommandName.askResources,
+    executable: async () => {
       vscode.window
         .showInputBox({
           prompt: "What Kind of information are you looking for?",
@@ -248,7 +250,7 @@ export function activate(context: vscode.ExtensionContext) {
           }
         });
     },
-  );
+  });
 
   let processSelectionCommand = vscode.commands.registerCommand(
     "genesis-translator.processSelection",
@@ -283,8 +285,8 @@ export function activate(context: vscode.ExtensionContext) {
           console.log("Selected file: " + folderUri[0].fsPath);
           const conversionOptions = [
             "USFM to JSON",
-            "JSON to USFM",
-            "Export to CSV",
+            // "JSON to USFM",
+            // "Export to CSV",
           ];
           vscode.window
             .showQuickPick(conversionOptions, {
@@ -377,7 +379,6 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
   );
-  context.subscriptions.push(disposableThree);
 }
 
 // This method is called when your extension is deactivated
