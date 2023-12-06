@@ -96,6 +96,7 @@ enum CommandName {
   editFiles = "editFiles",
   askResources = "askResources",
   processSelection = "processSelection",
+  openUsfmConverter = "openUsfmConverter",
 }
 
 const registerCommand = ({
@@ -270,9 +271,10 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
 
-  let openUsfmConverterCommand = vscode.commands.registerCommand(
-    "genesis-translator.openUsfmConverter",
-    async () => {
+  registerCommand({
+    context,
+    commandName: CommandName.openUsfmConverter,
+    executable: async () => {
       const options: vscode.OpenDialogOptions = {
         canSelectMany: false,
         canSelectFolders: true,
@@ -352,12 +354,8 @@ export function activate(context: vscode.ExtensionContext) {
             });
         }
       });
-
-      // Implement file picker logic here
     },
-  );
-
-  context.subscriptions.push(openUsfmConverterCommand);
+  });
 
   // Register the CodeLens provider
   const selectionCodeLensProvider = new SelectionCodeLensProvider();
