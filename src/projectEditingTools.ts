@@ -1,15 +1,30 @@
 import * as vscode from "vscode";
 import { getWorkSpaceFolder } from "./utils";
+import { CodeAction, CodeActionKind, TextEdit } from 'vscode-languageserver-types';
+import type { CodeActionParams, Range as LangServerRange, TextDocuments } from 'vscode-languageserver/node.js';
 
-const editFile = ({ fileUri }: { fileUri: vscode.Uri }) => {
+// todo: look into spell checker repo. We should start a server 
+function replaceText(range: LangServerRange, text?: string) {
+  return TextEdit.replace(range, text || '');
+}
+
+export const editFile = ({
+  fileUri,
+  positionRange: position,
+  newContent,
+}: {
+  fileUri: vscode.Uri;
+  positionRange: vscode.Range;
+  newContent: string;
+}) => {
   vscode.workspace
     .openTextDocument(fileUri)
     .then((document: any) => {
       console.log({ document });
       let edit = new vscode.WorkspaceEdit();
-      // Add your file modifications here
+      // Add your file modifications heressd
       // For example, to insert text:
-      edit.insert(fileUri, new vscode.Position(0, 0), "Your Text\n");
+      edit.insert(fileUri, position.start, newContent);
       return vscode.workspace.applyEdit(edit);
     })
     .then((success: any) => {
@@ -38,13 +53,29 @@ const editFileWithEditor = () => {
 const workspaceFolder = getWorkSpaceFolder();
 export function openAndEditFile(relativeFilePath: string) {
   const fileUri = vscode.Uri.file(workspaceFolder + relativeFilePath);
-  editFile({ fileUri });
+  const rangeStart = new vscode.Position(0, 0);
+  const rangeEnd = new vscode.Position(1, 1);
+
+  const range = new vscode.Range(rangeStart, rangeEnd);
+  editFile({
+    fileUri,
+    positionRange: range,
+    newContent: "test content",
+  });
 }
 
 export function showDiffWithOriginal(filePath: string) {
   const originalUri = vscode.Uri.file(workspaceFolder + filePath);
   const tempUri = originalUri.with({ path: `${originalUri.path}.temp` });
-  editFile({ fileUri: tempUri });
+  const rangeStart = new vscode.Position(0, 0);
+  const rangeEnd = new vscode.Position(1, 1);
+
+  const range = new vscode.Range(rangeStart, rangeEnd);
+  editFile({
+    fileUri: tempUri,
+    positionRange: range,
+    newContent: "test content diff",
+  });
   // Apply changes to the temp file
   // ...
 
@@ -57,12 +88,17 @@ export function showDiffWithOriginal(filePath: string) {
 }
 
 export class SelectionCodeLensProvider {
+  onDidChangeCodeLensesEmitter: vscode.EventEmitter<vscode.TextDocument>;
+  onDidChangeCodeLenses: vscode.Event<any>;
   constructor() {
     this.onDidChangeCodeLensesEmitter = new vscode.EventEmitter();
     this.onDidChangeCodeLenses = this.onDidChangeCodeLensesEmitter.event;
   }
 
-  provideCodeLenses(document, token) {
+  provideCodeLenses(
+    document: vscode.TextDocument,
+    token: vscode.CancellationToken,
+  ) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       return;
@@ -72,14 +108,31 @@ export class SelectionCodeLensProvider {
     if (selection.isEmpty) {
       return;
     }
-
+    console.log({ selection });
     const range = new vscode.Range(selection.start, selection.end);
-    const command = {
+    const command: Command = {
       title: "Process This Selection",
-      command: "extension.processSelection",
-      arguments: [document.getText(range)],
+      command: "genesis-translator.processSelection",
+      arguments: [
+        {
+          currentText: document.getText(range),
+          positionRange: range,
+          document,
+        },
+      ],
     };
 
     return [new vscode.CodeLens(range, command)];
   }
+}
+
+interface Command {
+  title: string;
+  command: string;
+  arguments: CodeLensArgs[];
+}
+export interface CodeLensArgs {
+  currentText: string;
+  positionRange: vscode.Range;
+  document: vscode.TextDocument;
 }

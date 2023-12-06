@@ -273,48 +273,58 @@ export function activate(context: vscode.ExtensionContext) {
               console.log({ selectedOption });
               // Handle the selected option
               if (selectedOption === "USFM to JSON") {
-                const fs = require("fs");
-                const path = require("path");
-                const directoryPath = folderUri[0].fsPath;
-                fs.readdir(
-                  directoryPath,
-                  async function (err: any, files: any) {
-                    if (err) {
-                      return console.log("Unable to scan directory: " + err);
-                    }
-                    for (const file of files) {
-                      if (
-                        path.extname(file) === ".SFM" ||
-                        path.extname(file) === ".sfm"
-                      ) {
-                        fs.readFile(
-                          path.join(directoryPath, file),
-                          "utf8",
-                          async function (err: any, contents: any) {
-                            console.log({ contents });
-                            const myUsfmParser = new grammar.USFMParser(
-                              contents,
-                            );
-
-                            const jsonOutput: JSON = myUsfmParser.toJSON();
-                            console.log({ jsonOutput });
-                            const fileName =
-                              path.basename(file, path.extname(file)) + ".json";
-                            console.log({ fileName }, path.extname(file));
-
-                            await generateFiles({
-                              workspaceRelativeParentFolderFilepath:
-                                "importedProject",
-                              fileName: fileName,
-                              fileContent: JSON.stringify(jsonOutput),
-                              shouldOverWrite: true,
-                            });
-                          },
-                        );
+                try {
+                  const fs = require("fs");
+                  const path = require("path");
+                  const directoryPath = folderUri[0].fsPath;
+                  fs.readdir(
+                    directoryPath,
+                    async function (err: any, files: any) {
+                      if (err) {
+                        return console.log("Unable to scan directory: " + err);
                       }
-                    }
-                  },
-                );
+                      console.log({ files });
+                      for (const file of files) {
+                        if (
+                          path.extname(file) === ".SFM" ||
+                          path.extname(file) === ".sfm"
+                        ) {
+                          fs.readFile(
+                            path.join(directoryPath, file),
+                            "utf8",
+                            async function (err: any, contents: any) {
+                              console.log({ contents });
+                              const myUsfmParser = new grammar.USFMParser(
+                                contents,
+                                grammar.LEVEL.RELAXED,
+                              );
+
+                              const fileName =
+                                path.basename(file, path.extname(file)) +
+                                ".json";
+                              try {
+                                const jsonOutput: JSON = myUsfmParser.toJSON();
+                                console.log({ jsonOutput });
+                                console.log({ fileName }, path.extname(file));
+                                await generateFiles({
+                                  workspaceRelativeParentFolderFilepath:
+                                    "importedProject",
+                                  fileName,
+                                  fileContent: JSON.stringify(jsonOutput),
+                                  shouldOverWrite: true,
+                                });
+                              } catch (error) {
+                                console.error(error, "in " + fileName);
+                              }
+                            },
+                          );
+                        }
+                      }
+                    },
+                  );
+                } catch (error) {
+                  console.error(error, "dhiwe");
+                }
               }
             });
         }
