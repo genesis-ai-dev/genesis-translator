@@ -120,9 +120,11 @@ const registerCommand = ({
 };
 
 export function activate(context: vscode.ExtensionContext) {
-  let translatorsCopilot = vscode.commands.registerCommand(
-    "genesis-translator.translatorsCopilot",
-    async () => {
+  registerCommand({
+    context,
+    commandName: CommandName.translatorsCopilot,
+    executable: async () => {
+      
       vscode.window
         .showInputBox({
           prompt: "What can I help you with in your translation project?",
@@ -190,11 +192,12 @@ export function activate(context: vscode.ExtensionContext) {
           }
         });
     },
-  );
+  });
 
-  let createVectorDB = vscode.commands.registerCommand(
-    "genesis-translator.createVectorDB",
-    async () => {
+  registerCommand({
+    context,
+    commandName: CommandName.createVectorDB,
+    executable: async () => {
       vscode.window.showInformationMessage("Vectorizing Resources");
       try {
         await vectorizeResources();
@@ -206,7 +209,7 @@ export function activate(context: vscode.ExtensionContext) {
       );
       vscode.window.showInformationMessage("Vectorization Complete");
     },
-  );
+  });
 
   registerCommand({
     context,
@@ -385,9 +388,6 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(disposableThree);
 
-  context.subscriptions.push(translatorsCopilot);
-
-  context.subscriptions.push(createVectorDB);
 
   context.subscriptions.push(editFilesCommand);
 }
