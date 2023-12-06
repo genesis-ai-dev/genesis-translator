@@ -93,6 +93,7 @@ enum CommandName {
   translatorsCopilot = "translatorsCopilot",
   createVectorDB = "createVectorDB",
   initFiles = "initFiles",
+  editFiles = "editFiles",
 }
 
 const registerCommand = ({
@@ -124,7 +125,6 @@ export function activate(context: vscode.ExtensionContext) {
     context,
     commandName: CommandName.translatorsCopilot,
     executable: async () => {
-      
       vscode.window
         .showInputBox({
           prompt: "What can I help you with in your translation project?",
@@ -222,23 +222,14 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
 
-  let editFilesCommand = vscode.commands.registerCommand(
-    "genesis-translator.editFiles",
-    async () => {
+  registerCommand({
+    context,
+    commandName: CommandName.editFiles,
+    executable: async () => {
       showDiffWithOriginal("/resources/lexicon.tsv");
-      // vscode.window.showInformationMessage("Vectorizing Resources");
-      // try {
-      //   await vectorizeResources();
-      // } catch (error) {
-      //   console.error(error);
-      // }
-      // vscode.window.showInformationMessage(
-      //   "Hello World from translation-test!",
-      // );
-      // vscode.window.showInformationMessage("Vectorization Complete");
     },
-  );
-  // const { exec } = require("child_process");
+  });
+
   let disposableThree = vscode.commands.registerCommand(
     "genesis-translator.askResources",
     async () => {
@@ -387,9 +378,6 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
   context.subscriptions.push(disposableThree);
-
-
-  context.subscriptions.push(editFilesCommand);
 }
 
 // This method is called when your extension is deactivated
