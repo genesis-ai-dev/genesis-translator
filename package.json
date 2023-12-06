@@ -16,6 +16,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "genesis-translator.initFiles",
+        "title": "Init Files"
+      },
+      {
         "command": "genesis-translator.translatorsCopilot",
         "title": "Translator's Copilot"
       },
@@ -32,8 +36,12 @@
         "title": "Ask Resources"
       },
       {
-        "command": "extension.processSelection",
+        "command": "genesis-translator.processSelection",
         "title": "Process Selected Text"
+      },
+      {
+        "command": "genesis-translator.openUsfmConverter",
+        "title": "Open USFM Converter"
       }
     ]
   },
@@ -66,6 +74,9 @@
     "dotenv": "^16.3.1",
     "json5": "^2.2.3",
     "langchain": "^0.0.197-rc.1",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "usfm-grammar": "^2.3.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-types": "^3.17.5"
   }
 }
