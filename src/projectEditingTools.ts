@@ -1,11 +1,19 @@
 import * as vscode from "vscode";
 import { getWorkSpaceFolder } from "./utils";
-import { CodeAction, CodeActionKind, TextEdit } from 'vscode-languageserver-types';
-import type { CodeActionParams, Range as LangServerRange, TextDocuments } from 'vscode-languageserver/node.js';
+import {
+  CodeAction,
+  CodeActionKind,
+  TextEdit,
+} from "vscode-languageserver-types";
+import type {
+  CodeActionParams,
+  Range as LangServerRange,
+  TextDocuments,
+} from "vscode-languageserver/node.js";
 
-// todo: look into spell checker repo. We should start a server 
-function replaceText(range: LangServerRange, text?: string) {
-  return TextEdit.replace(range, text || '');
+// todo: look into spell checker repo. We should start a server
+function replaceText(range: vscode.Range, text?: string) {
+  return TextEdit.replace(range, text || "");
 }
 
 export const editFile = ({
@@ -20,11 +28,8 @@ export const editFile = ({
   vscode.workspace
     .openTextDocument(fileUri)
     .then((document: any) => {
-      console.log({ document });
       let edit = new vscode.WorkspaceEdit();
-      // Add your file modifications heressd
-      // For example, to insert text:
-      edit.insert(fileUri, position.start, newContent);
+      edit.replace(fileUri, position, newContent);
       return vscode.workspace.applyEdit(edit);
     })
     .then((success: any) => {

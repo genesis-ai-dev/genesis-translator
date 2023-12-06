@@ -284,7 +284,6 @@ export function activate(context: vscode.ExtensionContext) {
 
       vscode.window.showOpenDialog(options).then((folderUri) => {
         if (folderUri && folderUri[0]) {
-          console.log("Selected file: " + folderUri[0].fsPath);
           const conversionOptions = [
             "USFM to JSON",
             // "JSON to USFM",
@@ -295,7 +294,6 @@ export function activate(context: vscode.ExtensionContext) {
               placeHolder: "Choose conversion option",
             })
             .then((selectedOption) => {
-              console.log({ selectedOption });
               // Handle the selected option
               if (selectedOption === "USFM to JSON") {
                 try {
@@ -306,9 +304,10 @@ export function activate(context: vscode.ExtensionContext) {
                     directoryPath,
                     async function (err: any, files: any) {
                       if (err) {
-                        return console.log("Unable to scan directory: " + err);
+                        return console.error(
+                          "Unable to scan directory: " + err,
+                        );
                       }
-                      console.log({ files });
                       for (const file of files) {
                         if (
                           path.extname(file) === ".SFM" ||
@@ -318,7 +317,6 @@ export function activate(context: vscode.ExtensionContext) {
                             path.join(directoryPath, file),
                             "utf8",
                             async function (err: any, contents: any) {
-                              console.log({ contents });
                               const myUsfmParser = new grammar.USFMParser(
                                 contents,
                                 grammar.LEVEL.RELAXED,
@@ -329,8 +327,6 @@ export function activate(context: vscode.ExtensionContext) {
                                 ".json";
                               try {
                                 const jsonOutput: JSON = myUsfmParser.toJSON();
-                                console.log({ jsonOutput });
-                                console.log({ fileName }, path.extname(file));
                                 await generateFiles({
                                   workspaceRelativeParentFolderFilepath:
                                     "importedProject",
@@ -339,7 +335,10 @@ export function activate(context: vscode.ExtensionContext) {
                                   shouldOverWrite: true,
                                 });
                               } catch (error) {
-                                console.error(error, "in " + fileName);
+                                console.error(
+                                  "Error generating files for " + fileName,
+                                  error,
+                                );
                               }
                             },
                           );
@@ -348,7 +347,7 @@ export function activate(context: vscode.ExtensionContext) {
                     },
                   );
                 } catch (error) {
-                  console.error(error, "dhiwe");
+                  console.error("Error in USFM to JSON conversion", error);
                 }
               }
             });
