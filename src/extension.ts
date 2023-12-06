@@ -88,6 +88,37 @@ const agentFunctions: any = {
     console.log("fetchVerse was called");
   },
 };
+
+enum CommandName {
+  translatorsCopilot = "translatorsCopilot",
+  createVectorDB = "createVectorDB",
+  initFiles = "initFiles",
+}
+
+const registerCommand = ({
+  context,
+  commandName,
+  executable,
+}: {
+  context: vscode.ExtensionContext;
+  commandName: CommandName;
+  executable: () => Promise<void>;
+}) => {
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      `genesis-translator.${commandName}`,
+      async () => {
+        try {
+          await executable();
+        } catch (error) {
+          console.error({ commandName, error });
+          vscode.window.showErrorMessage("error when running: " + commandName);
+        }
+      },
+    ),
+  );
+};
+
 export function activate(context: vscode.ExtensionContext) {
   let translatorsCopilot = vscode.commands.registerCommand(
     "genesis-translator.translatorsCopilot",
@@ -103,7 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
           } else {
             if (vscode.workspace.workspaceFolders !== undefined) {
               //   const rootPath = vscode.workspace.workspaceFolders[0].uri;
-
+              // fixme: this is not going to work long term. The command list is only going to grow. We should move to a pre process that uses a classifier to select the best tool(s) for the job. Those tools and heigh quality examples can be passed to a fine tuned llm that will use the tools to compleat the task
               try {
                 const prompt = `
 							You are a helpful assistant. Try to answer the user query below by using one of your tools. Pay attention to the input required by each tool.
@@ -177,21 +208,16 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "genesis-translator.initFiles",
-      async () => {
-        vscode.window.showInformationMessage("Generating Files");
-        try {
-          await generatePythonEnv();
-          await generateFilesInWorkspace();
-        } catch (error) {
-          console.error(error);
-        }
-        vscode.window.showInformationMessage("Done");
-      },
-    ),
-  );
+  registerCommand({
+    context,
+    commandName: CommandName.initFiles,
+    executable: async () => {
+      vscode.window.showInformationMessage("Generating Files");
+      await generatePythonEnv();
+      await generateFilesInWorkspace();
+      vscode.window.showInformationMessage("Done");
+    },
+  });
 
   let editFilesCommand = vscode.commands.registerCommand(
     "genesis-translator.editFiles",
