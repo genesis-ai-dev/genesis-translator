@@ -95,6 +95,7 @@ enum CommandName {
   initFiles = "initFiles",
   editFiles = "editFiles",
   askResources = "askResources",
+  processSelection = "processSelection",
 }
 
 const registerCommand = ({
@@ -104,14 +105,14 @@ const registerCommand = ({
 }: {
   context: vscode.ExtensionContext;
   commandName: CommandName;
-  executable: () => Promise<void>;
+  executable: (args?: any) => Promise<void>;
 }) => {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       `genesis-translator.${commandName}`,
-      async () => {
+      async (args) => {
         try {
-          await executable();
+          await executable(args);
         } catch (error) {
           console.error({ commandName, error });
           vscode.window.showErrorMessage("error when running: " + commandName);
@@ -252,9 +253,10 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
 
-  let processSelectionCommand = vscode.commands.registerCommand(
-    "genesis-translator.processSelection",
-    function (codeLensArgs: CodeLensArgs) {
+  registerCommand({
+    context,
+    commandName: CommandName.processSelection,
+    executable: async (codeLensArgs: CodeLensArgs) => {
       // Process the selected text as required
       vscode.window.showInformationMessage(
         `Selected text: ${codeLensArgs.currentText}`,
@@ -266,9 +268,7 @@ export function activate(context: vscode.ExtensionContext) {
         newContent: "test content",
       });
     },
-  );
-
-  context.subscriptions.push(processSelectionCommand);
+  });
 
   let openUsfmConverterCommand = vscode.commands.registerCommand(
     "genesis-translator.openUsfmConverter",
