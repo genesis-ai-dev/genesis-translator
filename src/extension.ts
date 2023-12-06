@@ -7,7 +7,6 @@ import {
   parseApiResponse,
   fetchVerse,
   updateVerse,
-  createFile,
 } from "./utils";
 import vectorizeResources, { queryVectorizedResources } from "./vectorization";
 import { generatePythonEnv, generateFilesInWorkspace } from "./initUtils";
@@ -37,7 +36,6 @@ export enum AgentFunctionName {
   updateLexicon = "updateLexicon",
   updateVerse = "updateVerse",
   queryResources = "queryResources",
-  createFile = "createFile",
 }
 
 const tools: {
@@ -68,13 +66,6 @@ const tools: {
       "This tool allows you to query resources by providing a query string. It performs a vector search in the lancedb vector database.",
     example: "{name: 'queryResources', input: ['Genesis 1:1']}",
   },
-  {
-    name: AgentFunctionName.createFile,
-    input: ["file_name", "file_content"],
-    toolDescription:
-      "This tool allows you to create a new file in the workspace with the provided name and content.",
-    example: "{name: 'createFile', input: ['example.txt', 'Hello, World!']}",
-  },
 ];
 
 const agentFunctions: any = {
@@ -95,12 +86,6 @@ const agentFunctions: any = {
   ) {
     await fetchVerse(...args);
     console.log("fetchVerse was called");
-  },
-  [AgentFunctionName.createFile]: async function (
-    ...args: Parameters<typeof createFile>
-  ) {
-    await createFile(...args);
-    console.log("createFile was called");
   },
 };
 export function activate(context: vscode.ExtensionContext) {
@@ -192,6 +177,22 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "genesis-translator.initFiles",
+      async () => {
+        vscode.window.showInformationMessage("Generating Files");
+        try {
+          await generatePythonEnv();
+          await generateFilesInWorkspace();
+        } catch (error) {
+          console.error(error);
+        }
+        vscode.window.showInformationMessage("Done");
+      },
+    ),
+  );
+
   let editFilesCommand = vscode.commands.registerCommand(
     "genesis-translator.editFiles",
     async () => {
@@ -229,7 +230,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  let disposable = vscode.commands.registerCommand(
+  let processSelectionCommand = vscode.commands.registerCommand(
     "genesis-translator.processSelection",
     function (codeLensArgs: CodeLensArgs) {
       // Process the selected text as required
@@ -245,7 +246,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  context.subscriptions.push(disposable);
+  context.subscriptions.push(processSelectionCommand);
 
   let openUsfmConverterCommand = vscode.commands.registerCommand(
     "genesis-translator.openUsfmConverter",
