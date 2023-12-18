@@ -17,6 +17,8 @@ import {
   showDiffWithOriginal,
 } from "./projectEditingTools";
 import { generateFiles } from "./fileUtils";
+import { SidebarProvider } from "./SidebarProvider";
+// import { HelloWorldPanel } from "./panels/HelloWorldPanel";
 
 const grammar = require("usfm-grammar");
 const dotenv = require("dotenv");
@@ -124,6 +126,20 @@ const registerCommand = ({
 };
 
 export function activate(context: vscode.ExtensionContext) {
+  const sidebarProvider = new SidebarProvider(context.extensionUri);
+  const item = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+  );
+  // item.text = "$(beaker) Add Todo";
+  // item.command = "vstodo.addTodo";
+  item.show();
+
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      "genesis-translator-sidebar",
+      sidebarProvider,
+    ),
+  );
   registerCommand({
     context,
     commandName: CommandName.translatorsCopilot,
