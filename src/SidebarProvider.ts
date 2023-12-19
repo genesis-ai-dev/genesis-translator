@@ -60,6 +60,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
       }
     });
+
+    webviewView.webview.onDidReceiveMessage(async (message) => {
+      if (message.command === "openUsfmConverter") {
+        vscode.commands.executeCommand("genesis-translator.openUsfmConverter");
+      }
+      // todo: Handle other messages with allCommandsObject[message.command](message.data) it's not a function but you get the point
+    });
   }
 
   public revive(panel: vscode.WebviewView) {
