@@ -19,7 +19,7 @@
         {
           "id": "genesis-translator-sidebar-view",
           "title": "Genesis Translator Bar",
-          "icon": "media/copilot.svg"
+          "icon": "src/media/copilot.svg"
         }
       ]
     },
@@ -29,7 +29,7 @@
           "type": "webview",
           "id": "genesis-translator-sidebar",
           "name": "Genesis Translator",
-          "icon": "media/copilot.svg",
+          "icon": "src/media/copilot.svg",
           "contextualTitle": "Genesis Translator"
         }
       ]

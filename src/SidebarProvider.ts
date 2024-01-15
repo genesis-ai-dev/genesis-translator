@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { authenticate } from "./authenticate";
 import { apiBaseUrl } from "./constants";
-import { getNonce } from "./getNonce";
+import { getNonce } from "./utilities/getNonce";
 import { TokenManager } from "./TokenManager";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
