@@ -1,13 +1,17 @@
-// import { vscode } from "./utilities/vscode";
+import { useState, useEffect } from "react";
 import {
   VSCodeButton,
   VSCodeTextField,
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
-import { useEffect } from "react";
 const vscode = acquireVsCodeApi();
-
+interface Message {
+  value: string;
+}
 function App() {
+  const [message, setMessage] = useState<Message>({ value: "" });
+  const [messageLog, setMessageLog] = useState<Message[]>([]);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
@@ -32,15 +36,17 @@ function App() {
 
   function handleHowdyClick() {
     console.log("test");
+    setMessageLog([...messageLog, { value: message?.value }]);
     vscode.postMessage({
-      command: "openUsfmConverter",
-      text: "Hey there partner! 🤠",
+      command: "sendMessage",
+      text: message, // Use the state variable here
     });
+    setMessage({ value: "" });
   }
   // console.log("getState", vscode.getState());
   window.addEventListener("message", (event) => {
     const message = event.data; // The JSON data our extension sent
-    console.log({ message });
+    console.log({ event, message });
     switch (message.command) {
       case "setState": {
         // Handle the 'setState' message and update webview state
@@ -58,16 +64,19 @@ function App() {
         {/* Chat messages will be displayed here */}
         {/* This is a placeholder for chat content */}
         <div className="chat-content">
-          <p>User: Hello!</p>
-          <p>
-            \v 1 γιMuo la oro rorongmana tampungkae, ngae kao tu rong. Kao tu la
-            Nutu nena kao I Nutu kena.
-          </p>
-          {/* More chat messages */}
+          {messageLog.map((message, index) => (
+            <p key={index}>{message.value}</p>
+          ))}
         </div>
         {/* Input for sending messages */}
         <div className="chat-input">
-          <VSCodeTextField placeholder="Type a message..." />
+          <VSCodeTextField
+            placeholder="Type a message..."
+            value={message.value} // Set the value of the input field to the state variable
+            onChange={(e) =>
+              setMessage({ value: (e.target as HTMLInputElement).value })
+            }
+          />
           <VSCodeButton onClick={() => handleHowdyClick()}>Send</VSCodeButton>
         </div>
       </div>

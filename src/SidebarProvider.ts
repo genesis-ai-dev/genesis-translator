@@ -62,8 +62,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     });
 
     webviewView.webview.onDidReceiveMessage(async (message) => {
-      if (message.command === "openUsfmConverter") {
-        vscode.commands.executeCommand("genesis-translator.openUsfmConverter");
+      if (message.command === "sendMessage") {
+        webviewView.webview.postMessage({
+          type: "messageForChat",
+          value: { message: { value: "Hello" } },
+        });
+        // vscode.commands.executeCommand("genesis-translator.openUsfmConverter");
       }
       // todo: Handle other messages with allCommandsObject[message.command](message.data) it's not a function but you get the point
     });
@@ -84,7 +88,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this._extensionUri,
-        "my-vite-project",
+        "ChatSideBar",
         "build",
         "assets",
         "index.js",
@@ -93,7 +97,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
         this._extensionUri,
-        "my-vite-project",
+        "ChatSideBar",
         "build",
         "assets",
         "index.css",
