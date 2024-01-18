@@ -5,6 +5,7 @@ import {
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect } from "react";
+const vscode = acquireVsCodeApi();
 
 function App() {
   useEffect(() => {
@@ -30,11 +31,11 @@ function App() {
   }, []); // The empty array means this effect runs once on mount and cleanup on unmount
 
   function handleHowdyClick() {
-    // console.log("vscode", vscode);
-    // vscode.postMessage({
-    //   command: "openUsfmConverter",
-    //   text: "Hey there partner! 🤠",
-    // });
+    console.log("test");
+    vscode.postMessage({
+      command: "openUsfmConverter",
+      text: "Hey there partner! 🤠",
+    });
   }
   // console.log("getState", vscode.getState());
   window.addEventListener("message", (event) => {
@@ -58,7 +59,10 @@ function App() {
         {/* This is a placeholder for chat content */}
         <div className="chat-content">
           <p>User: Hello!</p>
-          <p>\v 1 γιMuo la oro rorongmana tampungkae, ngae kao tu rong. Kao tu la Nutu nena kao I Nutu kena.</p>
+          <p>
+            \v 1 γιMuo la oro rorongmana tampungkae, ngae kao tu rong. Kao tu la
+            Nutu nena kao I Nutu kena.
+          </p>
           {/* More chat messages */}
         </div>
         {/* Input for sending messages */}
