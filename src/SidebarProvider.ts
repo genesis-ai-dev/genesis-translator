@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import { authenticate } from "./authenticate";
 import { apiBaseUrl } from "./constants";
 import { getNonce } from "./utilities/getNonce";
-import { TokenManager } from "./TokenManager";
+import { ChatMessage } from "../types";
+import { promptAgent } from "./utils";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   _view?: vscode.WebviewView;
@@ -22,50 +23,55 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage(async (data) => {
-      switch (data.type) {
-        case "logout": {
-          TokenManager.setToken("");
-          break;
-        }
-        case "authenticate": {
-          authenticate(() => {
-            webviewView.webview.postMessage({
-              type: "token",
-              value: TokenManager.getToken(),
-            });
-          });
-          break;
-        }
-        case "get-token": {
-          webviewView.webview.postMessage({
-            type: "token",
-            value: TokenManager.getToken(),
-          });
-          break;
-        }
-        case "onInfo": {
-          if (!data.value) {
-            return;
-          }
-          vscode.window.showInformationMessage(data.value);
-          break;
-        }
-        case "onError": {
-          if (!data.value) {
-            return;
-          }
-          vscode.window.showErrorMessage(data.value);
-          break;
-        }
-      }
-    });
+    // webviewView.webview.onDidReceiveMessage(async (data) => {
+    //   console.log({ data });
+    //   switch (data.type) {
+    //     case "logout": {
+    //       TokenManager.setToken("");
+    //       break;
+    //     }
+    //     case "authenticate": {
+    //       authenticate(() => {
+    //         webviewView.webview.postMessage({
+    //           type: "token",
+    //           value: TokenManager.getToken(),
+    //         });
+    //       });
+    //       break;
+    //     }
+    //     case "get-token": {
+    //       webviewView.webview.postMessage({
+    //         type: "token",
+    //         value: TokenManager.getToken(),
+    //       });
+    //       break;
+    //     }
+    //     case "onInfo": {
+    //       if (!data.value) {
+    //         return;
+    //       }
+    //       vscode.window.showInformationMessage(data.value);
+    //       break;
+    //     }
+    //     case "onError": {
+    //       if (!data.value) {
+    //         return;
+    //       }
+    //       vscode.window.showErrorMessage(data.value);
+    //       break;
+    //     }
+    //   }
+    // });
 
-    webviewView.webview.onDidReceiveMessage(async (message) => {
-      if (message.command === "sendMessage") {
+    webviewView.webview.onDidReceiveMessage(async (frontEndMessage) => {
+      console.log({ frontEndMessage });
+      if (frontEndMessage.command === "sendMessage") {
+        const message: ChatMessage = frontEndMessage.message;
+        const prompt = `${message.value}`;
+        const agentOutput = await promptAgent(prompt);
         webviewView.webview.postMessage({
           type: "messageForChat",
-          value: { message: { value: "Hello" } },
+          value: { message: { value: `Agent: ${agentOutput}` } },
         });
         // vscode.commands.executeCommand("genesis-translator.openUsfmConverter");
       }

@@ -4,13 +4,12 @@ import {
   VSCodeTextField,
 } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
+import { ChatMessage } from "../../types";
 const vscode = acquireVsCodeApi();
-interface Message {
-  value: string;
-}
+
 function App() {
-  const [message, setMessage] = useState<Message>({ value: "" });
-  const [messageLog, setMessageLog] = useState<Message[]>([]);
+  const [message, setMessage] = useState<ChatMessage>({ value: "" });
+  const [messageLog, setMessageLog] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -35,32 +34,43 @@ function App() {
   }, []); // The empty array means this effect runs once on mount and cleanup on unmount
 
   function handleHowdyClick() {
-    console.log("test");
     setMessageLog([...messageLog, { value: message?.value }]);
     vscode.postMessage({
       command: "sendMessage",
-      text: message, // Use the state variable here
+      message: message, // Use the state variable here
     });
     setMessage({ value: "" });
   }
   // console.log("getState", vscode.getState());
-  window.addEventListener("message", (event) => {
-    const message = event.data; // The JSON data our extension sent
-    console.log({ event, message });
-    switch (message.command) {
-      case "setState": {
-        // Handle the 'setState' message and update webview state
-        const state = message.data;
-        console.log({ state });
-        // Use the state to update your webview content
-        break;
-      }
-    }
-  });
+  window.addEventListener(
+    "message",
+    (
+      event: MessageEvent<{
+        value: { message: ChatMessage };
+        type: string;
+      }>,
+    ) => {
+      // const message = event.data; // The JSON data our extension sent
+      console.log({ event });
+      setMessageLog([
+        ...messageLog,
+        { value: event.data.value.message?.value },
+      ]);
+      // switch (message.command) {
+      //   case "setState": {
+      //     // Handle the 'setState' message and update webview state
+      //     const state = message.data;
+      //     console.log({ state });
+      //     // Use the state to update your webview content
+      //     break;
+      //   }
+      // }
+    },
+  );
   return (
-    <main>
+    <main style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <h1>Chat Window</h1>
-      <div className="chat-container">
+      <div className="chat-container" style={{ flex: 1, overflowY: "auto" }}>
         {/* Chat messages will be displayed here */}
         {/* This is a placeholder for chat content */}
         <div className="chat-content">
@@ -68,17 +78,20 @@ function App() {
             <p key={index}>{message.value}</p>
           ))}
         </div>
-        {/* Input for sending messages */}
-        <div className="chat-input">
-          <VSCodeTextField
-            placeholder="Type a message..."
-            value={message.value} // Set the value of the input field to the state variable
-            onChange={(e) =>
-              setMessage({ value: (e.target as HTMLInputElement).value })
-            }
-          />
-          <VSCodeButton onClick={() => handleHowdyClick()}>Send</VSCodeButton>
-        </div>
+      </div>
+      {/* Input for sending messages */}
+      <div
+        className="chat-input"
+        style={{ position: "sticky", bottom: 0, backgroundColor: "white" }}
+      >
+        <VSCodeTextField
+          placeholder="Type a message..."
+          value={message.value} // Set the value of the input field to the state variable
+          onChange={(e) =>
+            setMessage({ value: (e.target as HTMLInputElement).value })
+          }
+        />
+        <VSCodeButton onClick={() => handleHowdyClick()}>Send</VSCodeButton>
       </div>
     </main>
   );
