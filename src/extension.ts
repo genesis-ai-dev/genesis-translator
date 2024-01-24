@@ -18,6 +18,9 @@ import {
 } from "./projectEditingTools";
 import { generateFiles } from "./fileUtils";
 import { SidebarProvider } from "./SidebarProvider";
+import { vectorSearchProvider } from "./vectorSearchProvider";
+import { generateVectors } from "./api/chat/engine/generate";
+import { startChatServer } from "./api/chat/route";
 // import { HelloWorldPanel } from "./panels/HelloWorldPanel";
 
 const grammar = require("usfm-grammar");
@@ -99,8 +102,9 @@ enum CommandName {
   askResources = "askResources",
   processSelection = "processSelection",
   openUsfmConverter = "openUsfmConverter",
+  generateVectors = "generateVectors",
 }
-
+export const EXTENSION_NAME = "genesis-translator";
 const registerCommand = ({
   context,
   commandName,
@@ -112,7 +116,7 @@ const registerCommand = ({
 }) => {
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      `genesis-translator.${commandName}`,
+      `${EXTENSION_NAME}.${commandName}`,
       async (args) => {
         try {
           await executable(args);
@@ -126,20 +130,22 @@ const registerCommand = ({
 };
 
 export function activate(context: vscode.ExtensionContext) {
+  vectorSearchProvider(context);
   const sidebarProvider = new SidebarProvider(context.extensionUri);
   const item = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
+  startChatServer();
   // item.text = "$(beaker) Add Todo";
   // item.command = "vstodo.addTodo";
-  item.show();
-
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       "genesis-translator-sidebar",
       sidebarProvider,
     ),
   );
+  item.show();
+
   registerCommand({
     context,
     commandName: CommandName.translatorsCopilot,
@@ -279,6 +285,16 @@ export function activate(context: vscode.ExtensionContext) {
         positionRange: codeLensArgs.positionRange,
         newContent: "test content",
       });
+    },
+  });
+
+  registerCommand({
+    context,
+    commandName: CommandName.generateVectors,
+    executable: async () => {
+      await generateVectors();
+      console.log("generateVectors was called");
+      vscode.window.showInformationMessage(`Resources ready for chat`);
     },
   });
 

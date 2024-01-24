@@ -6,7 +6,7 @@ import {
   storageContextFromDefaults,
   VectorStoreIndex,
 } from "llamaindex";
-import { CHUNK_OVERLAP, CHUNK_SIZE, STORAGE_CACHE_DIR } from "./constants.mjs";
+import { CHUNK_OVERLAP, CHUNK_SIZE, STORAGE_CACHE_DIR } from "./constants";
 
 async function getDataSource(llm: LLM) {
   const serviceContext = serviceContextFromDefaults({
@@ -17,7 +17,7 @@ async function getDataSource(llm: LLM) {
   let storageContext = await storageContextFromDefaults({
     persistDir: `${STORAGE_CACHE_DIR}`,
   });
-
+  console.log({ storageContext });
   const numberOfDocs = Object.keys(
     (storageContext.docStore as SimpleDocumentStore).toDict(),
   ).length;
@@ -33,6 +33,7 @@ async function getDataSource(llm: LLM) {
 }
 
 export async function createChatEngine(llm: LLM) {
+  console.log("createChatEngine was called");
   const index = await getDataSource(llm);
   const retriever = index.asRetriever();
   retriever.similarityTopK = 5;

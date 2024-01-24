@@ -9,6 +9,7 @@ import {
 import { Response } from "llamaindex";
 
 type ParserOptions = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   image_url?: string;
 };
 
@@ -25,6 +26,7 @@ function createParser(
       if (opts?.image_url) {
         const message: JSONValue = {
           type: "image_url",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           image_url: {
             url: opts.image_url,
           },
@@ -51,6 +53,7 @@ function createParser(
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export function LlamaIndexStream(
   res: AsyncIterable<Response>,
   opts?: {

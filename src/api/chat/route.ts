@@ -1,17 +1,18 @@
-import { StreamingTextResponse } from "ai";
+import express from "express";
 import { ChatMessage, MessageContent, OpenAI } from "llamaindex";
-import { NextRequest, NextResponse } from "next/server";
 import { createChatEngine } from "./engine";
 import { LlamaIndexStream } from "./llamaindex-stream";
+import { apiBaseUrl } from "../../constants";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+const router = express.Router();
 
 const convertMessageContent = (
   textMessage: string,
   imageUrl: string | undefined,
 ): MessageContent => {
-  if (!imageUrl) return textMessage;
+  if (!imageUrl) {
+    return textMessage;
+  }
   return [
     {
       type: "text",
@@ -19,6 +20,7 @@ const convertMessageContent = (
     },
     {
       type: "image_url",
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       image_url: {
         url: imageUrl,
       },
@@ -26,23 +28,21 @@ const convertMessageContent = (
   ];
 };
 
-export async function POST(request: NextRequest) {
+router.post("/", async (req: express.Request, res: express.Response) => {
   try {
-    const body = await request.json();
-    const { messages, data }: { messages: ChatMessage[]; data: any } = body;
+    console.log({ request: req });
+    const body = req.body;
+    const { messages, data } = body;
     const userMessage = messages.pop();
     if (!messages || !userMessage || userMessage.role !== "user") {
-      return NextResponse.json(
-        {
-          error:
-            "messages are required in the request body and the last message must be from the user",
-        },
-        { status: 400 },
-      );
+      return res.status(400).json({
+        error:
+          "messages are required in the request body and the last message must be from the user",
+      });
     }
 
     const llm = new OpenAI({
-      model: (process.env.MODEL as any) ?? "gpt-3.5-turbo",
+      model: process.env.MODEL ?? "gpt-3.5-turbo",
       maxTokens: 512,
     });
 
@@ -64,21 +64,30 @@ export async function POST(request: NextRequest) {
     // Transform LlamaIndex stream to Vercel/AI format
     const { stream, data: streamData } = LlamaIndexStream(response, {
       parserOptions: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         image_url: data?.imageUrl,
       },
     });
 
     // Return a StreamingTextResponse, which can be consumed by the Vercel/AI client
-    return new StreamingTextResponse(stream, {}, streamData);
-  } catch (error) {
+    return res.json({ stream, data: streamData });
+  } catch (error: any) {
     console.error("[LlamaIndex]", error);
-    return NextResponse.json(
-      {
-        error: (error as Error).message,
-      },
-      {
-        status: 500,
-      },
-    );
+    return res.status(500).json({
+      error: error.message,
+    });
   }
+});
+
+export const chatServer = express();
+
+chatServer.use("/api/chat", router);
+
+export function startChatServer() {
+  console.log(`startChatServer called`, { apiBaseUrl });
+  const url = new URL(apiBaseUrl);
+  const port = url.port;
+  chatServer.listen(port, () => {
+    console.log(`Server is running on port ${port}`); // this is not firing WHY??
+  });
 }

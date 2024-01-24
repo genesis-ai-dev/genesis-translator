@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { authenticate } from "./authenticate";
 import { apiBaseUrl } from "./constants";
 import { getNonce } from "./utilities/getNonce";
-import { ChatMessage } from "../types";
+import { ChatMessage, FrontEndMessage } from "../types";
 import { promptAgent } from "./utils";
+import { EXTENSION_NAME } from "./extension";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   _view?: vscode.WebviewView;
@@ -23,60 +23,44 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-    // webviewView.webview.onDidReceiveMessage(async (data) => {
-    //   console.log({ data });
-    //   switch (data.type) {
-    //     case "logout": {
-    //       TokenManager.setToken("");
-    //       break;
-    //     }
-    //     case "authenticate": {
-    //       authenticate(() => {
-    //         webviewView.webview.postMessage({
-    //           type: "token",
-    //           value: TokenManager.getToken(),
-    //         });
-    //       });
-    //       break;
-    //     }
-    //     case "get-token": {
-    //       webviewView.webview.postMessage({
-    //         type: "token",
-    //         value: TokenManager.getToken(),
-    //       });
-    //       break;
-    //     }
-    //     case "onInfo": {
-    //       if (!data.value) {
-    //         return;
-    //       }
-    //       vscode.window.showInformationMessage(data.value);
-    //       break;
-    //     }
-    //     case "onError": {
-    //       if (!data.value) {
-    //         return;
-    //       }
-    //       vscode.window.showErrorMessage(data.value);
-    //       break;
-    //     }
-    //   }
-    // });
+    webviewView.webview.onDidReceiveMessage(
+      async (frontEndMessage: FrontEndMessage) => {
+        console.log({ frontEndMessage });
+        const response = await vscode.commands.executeCommand(
+          `${EXTENSION_NAME}.${frontEndMessage.command.name}`,
+          frontEndMessage.command.data,
+        );
 
-    webviewView.webview.onDidReceiveMessage(async (frontEndMessage) => {
-      console.log({ frontEndMessage });
-      if (frontEndMessage.command === "sendMessage") {
-        const message: ChatMessage = frontEndMessage.message;
-        const prompt = `${message.value}`;
-        const agentOutput = await promptAgent(prompt);
-        webviewView.webview.postMessage({
-          type: "messageForChat",
-          value: { message: { value: `Agent: ${agentOutput}` } },
-        });
-        // vscode.commands.executeCommand("genesis-translator.openUsfmConverter");
-      }
-      // todo: Handle other messages with allCommandsObject[message.command](message.data) it's not a function but you get the point
-    });
+        console.log({ response });
+
+        // webviewView.webview.postMessage({
+        //   type: "messageForChat",
+        //   value: { message: { value: `Agent: ${agentOutput}` } },
+        // });
+
+        // if (frontEndMessage.command === "sendMessage") {
+        //   const message: ChatMessage = frontEndMessage.message;
+        //   const prompt = `${message.value}`;
+        //   const handleChatResponse = await vscode.commands.executeCommand(
+        //     `${EXTENSION_NAME}.handleChatRequest`,
+        //     message,
+        //   );
+        //   console.log({ handleChatResponse });
+        //   const agentOutput = await promptAgent(prompt);
+        //   webviewView.webview.postMessage({
+        //     type: "messageForChat",
+        //     value: { message: { value: `Agent: ${agentOutput}` } },
+        //   });
+        //   // vscode.commands.executeCommand("genesis-translator.openUsfmConverter");
+        // } else if (frontEndMessage.command === "startChatServer") {
+        //   const handleChatResponse = await vscode.commands.executeCommand(
+        //     `${EXTENSION_NAME}.startChatServer`,
+        //     // message,
+        //   );
+        // }
+        // todo: Handle other messages with allCommandsObject[message.command](message.data) it's not a function but you get the point
+      },
+    );
   }
 
   public revive(panel: vscode.WebviewView) {
@@ -115,6 +99,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     // Use a nonce to only allow a specific script to be run.
     const nonce = getNonce();
+    const apiBaseUrlWebview = webview.asWebviewUri(
+      vscode.Uri.joinPath(vscode.Uri.parse(apiBaseUrl), "/api/chat"),
+    );
     // find where to connect react to this by looking at other example repo
     return /*html*/ `<!DOCTYPE html>
     <html lang="en">
@@ -126,14 +113,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
       -->
       <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${
         webview.cspSource
-      }; script-src 'nonce-${nonce}';">
+      }; script-src 'nonce-${nonce}'; connect-src vscode-webview: ${apiBaseUrlWebview};">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link href="${styleResetUri}" rel="stylesheet">
       <link href="${styleVSCodeUri}" rel="stylesheet">
       <link href="${styleUri}" rel="stylesheet">
       <script nonce="${nonce}">
-        // const vsCodeApi = acquireVsCodeApi();
-        const apiBaseUrl = ${JSON.stringify(apiBaseUrl)}
+        const apiBaseUrl = ${JSON.stringify(apiBaseUrlWebview)}
       </script>
       </head>
       <body>

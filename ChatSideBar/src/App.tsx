@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
-import {
-  VSCodeButton,
-  VSCodeTextField,
-} from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
-import { ChatMessage } from "../../types";
+import { ChatMessage, FrontEndMessage } from "../../types";
+import ChatSection from "./components/chat-section";
 const vscode = acquireVsCodeApi();
 
 function App() {
@@ -27,6 +24,12 @@ function App() {
 
     window.addEventListener("message", handleMessage);
 
+    const frontEndMessage: FrontEndMessage = {
+      command: { name: "startChatServer" },
+    };
+
+    vscode.postMessage(frontEndMessage);
+
     // Cleanup function to remove the event listener
     return () => {
       window.removeEventListener("message", handleMessage);
@@ -35,13 +38,18 @@ function App() {
 
   function handleHowdyClick() {
     setMessageLog([...messageLog, { value: message?.value }]);
-    vscode.postMessage({
-      command: "sendMessage",
-      message: message, // Use the state variable here
-    });
+    const frontEndMessage: FrontEndMessage = {
+      command: { name: "handleChatRequest", data: { message } },
+    };
+
+    vscode.postMessage(frontEndMessage);
+    // vscode.postMessage({
+    //   command: "sendMessage",
+    //   message: message, // Use the state variable here
+    // });
     setMessage({ value: "" });
   }
-  // console.log("getState", vscode.getState());
+  console.log("handleHowdyClick", handleHowdyClick);
   window.addEventListener(
     "message",
     (
@@ -69,30 +77,7 @@ function App() {
   );
   return (
     <main style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <h1>Chat Window</h1>
-      <div className="chat-container" style={{ flex: 1, overflowY: "auto" }}>
-        {/* Chat messages will be displayed here */}
-        {/* This is a placeholder for chat content */}
-        <div className="chat-content">
-          {messageLog.map((message, index) => (
-            <p key={index}>{message.value}</p>
-          ))}
-        </div>
-      </div>
-      {/* Input for sending messages */}
-      <div
-        className="chat-input"
-        style={{ position: "sticky", bottom: 0, backgroundColor: "white" }}
-      >
-        <VSCodeTextField
-          placeholder="Type a message..."
-          value={message.value} // Set the value of the input field to the state variable
-          onChange={(e) =>
-            setMessage({ value: (e.target as HTMLInputElement).value })
-          }
-        />
-        <VSCodeButton onClick={() => handleHowdyClick()}>Send</VSCodeButton>
-      </div>
+      <ChatSection apiBaseUrl={apiBaseUrl} />
     </main>
   );
 }

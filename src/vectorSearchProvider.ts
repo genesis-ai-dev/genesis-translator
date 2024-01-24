@@ -10,6 +10,8 @@ import {
   ContextChatEngine,
 } from "llamaindex";
 import { LlamaIndexStream } from "./api/chat/llamaindex-stream";
+import { EXTENSION_NAME } from "./extension";
+import { generateVectors } from "./api/chat/engine/generate";
 
 const convertMessageContent = (
   textMessage: string,
@@ -35,23 +37,28 @@ const convertMessageContent = (
 
 export const vectorSearchProvider = (context: vscode.ExtensionContext) => {
   let chatEngine: ContextChatEngine | undefined;
-
+  console.log("vectorSearchProvider was called");
   // Start the chat server when the extension is activated
   context.subscriptions.push(
-    vscode.commands.registerCommand("extension.startChatServer", async () => {
-      const llm = new OpenAI({
-        model: (process.env.MODEL as any) ?? "gpt-3.5-turbo",
-        maxTokens: 512,
-      });
-      chatEngine = await createChatEngine(llm);
-    }),
+    vscode.commands.registerCommand(
+      `${EXTENSION_NAME}.startChatServer`,
+      async () => {
+        console.log("startChatServer was called");
+        // const llm = new OpenAI({
+        //   model: (process.env.MODEL as any) ?? "gpt-3.5-turbo",
+        //   maxTokens: 512,
+        // });
+        // chatEngine = await createChatEngine(llm);
+      },
+    ),
   );
 
   // Handle incoming chat requests
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "extension.handleChatRequest",
+      `${EXTENSION_NAME}.handleChatRequest`,
       async (request) => {
+        console.log("handleChatRequest was called", { request });
         try {
           const body = await request.json();
           const { messages, data }: { messages: ChatMessage[]; data: any } =
