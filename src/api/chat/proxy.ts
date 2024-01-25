@@ -2,20 +2,30 @@ import cors from "cors";
 import express from "express";
 import http from "http";
 import https from "https";
-import { apiBaseUrl } from "../../constants";
 
-const PROXY_PORT = 3002;
+const PROXY_PORT = 65433;
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 app.use((req, res, next) => {
   // Proxy the request
   const { origin, host, ...headers } = req.headers;
   const url = req.headers["x-continue-url"] as string;
-  const parsedUrl = new URL(url);
+  const body = req.body;
+  console.log({ req }, "body in proxy");
+  const [baseUrl, path] = url.split(", ");
+  //   if (!baseUrl || !isValidUrl(baseUrl)) {
+  //     console.error("Invalid or missing x-continue-url header");
+  //     return res
+  //       .status(400)
+  //       .json({ error: "Invalid or missing x-continue-url header" });
+  //   }
+  const parsedUrl = new URL(baseUrl);
+  //   const parsedUrl = new URL(url);
   const protocolString = url.split("://")[0];
   const protocol = protocolString === "https" ? https : http;
-  const proxy = protocol.request(url, {
+  const proxy = protocol.request(baseUrl + path, {
     method: req.method,
     headers: {
       ...headers,

@@ -5,7 +5,7 @@ import { LlamaIndexStream } from "./llamaindex-stream";
 import { apiBaseUrl } from "../../constants";
 
 const router = express.Router();
-
+router.use(express.json());
 const convertMessageContent = (
   textMessage: string,
   imageUrl: string | undefined,
@@ -30,8 +30,8 @@ const convertMessageContent = (
 
 router.post("/", async (req: express.Request, res: express.Response) => {
   try {
-    console.log({ request: req });
     const body = req.body;
+    console.log({ body }, "route body");
     const { messages, data } = body;
     const userMessage = messages.pop();
     if (!messages || !userMessage || userMessage.role !== "user") {

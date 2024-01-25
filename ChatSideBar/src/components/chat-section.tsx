@@ -16,22 +16,15 @@ export default function ChatSection(props: { apiBaseUrl: typeof apiBaseUrl }) {
     stop,
     data,
   } = useChat({
-    api: props.apiBaseUrl.external,
+    // api: props.apiBaseUrl.external,
     headers: {
       "Content-Type": "application/json", // using JSON because of vercel/ai 2.2.26
+      "x-continue-url": "http://localhost:3002",
     },
   });
 
   console.log({
     api: props.apiBaseUrl,
-    messages,
-    input,
-    isLoading,
-    handleSubmit,
-    handleInputChange,
-    reload,
-    stop,
-    data,
   });
   const transformedMessages = useMemo(() => {
     return insertDataIntoMessages(messages, data);

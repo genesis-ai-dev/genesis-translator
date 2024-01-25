@@ -20,6 +20,7 @@ import { generateFiles } from "./fileUtils";
 import { SidebarProvider } from "./SidebarProvider";
 import { vectorSearchProvider } from "./vectorSearchProvider";
 import { generateVectors } from "./api/chat/engine/generate";
+import { startProxy } from "./api/chat/proxy";
 import { startChatServer } from "./api/chat/route";
 // import { HelloWorldPanel } from "./panels/HelloWorldPanel";
 
@@ -135,6 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
   const item = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
+  startProxy();
   startChatServer();
   // item.text = "$(beaker) Add Todo";
   // item.command = "vstodo.addTodo";

@@ -1,4 +1,4 @@
-import Image from "next/image";
+// import Image from "next/image";
 
 export default function Header() {
   return (
@@ -13,14 +13,14 @@ export default function Header() {
           className="flex items-center justify-center font-nunito text-lg font-bold gap-2"
         >
           <span>Built by LlamaIndex</span>
-          <Image
+          {/* <Image
             className="rounded-xl"
             src="/llama.png"
             alt="Llama Logo"
             width={40}
             height={40}
             priority
-          />
+          /> */}
         </a>
       </div>
     </div>

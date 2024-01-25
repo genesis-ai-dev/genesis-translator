@@ -100,7 +100,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     // Use a nonce to only allow a specific script to be run.
     const nonce = getNonce();
     const apiBaseUrlWebview = webview.asWebviewUri(
-      vscode.Uri.joinPath(vscode.Uri.parse(apiBaseUrl), "/api/chat"),
+      vscode.Uri.parse("http://localhost:65433"),
     );
     // find where to connect react to this by looking at other example repo
     return /*html*/ `<!DOCTYPE html>
@@ -111,7 +111,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         Use a content security policy to only allow loading images from https or from our extension directory,
         and only allow scripts that have a specific nonce.
       -->
-      <meta http-equiv="Content-Security-Policy" content="img-src https: data:; style-src 'unsafe-inline' ${
+      <meta http-equiv="Content-Security-Policy" content="img-src https: data: vscode-webview:; style-src 'unsafe-inline' ${
         webview.cspSource
       }; script-src 'nonce-${nonce}'; connect-src vscode-webview: ${apiBaseUrlWebview};">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
