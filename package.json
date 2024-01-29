@@ -14,6 +14,36 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "translators-copilot",
+      "properties": {
+        "translators-copilot.llmEndpoint": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "The endpoint for the completion API. Either OpenAI or local LLM."
+        },
+        "translators-copilot.api_key": {
+          "type": "string",
+          "default": "",
+          "description": "Your own openai API key. Ignorable for local LLM."
+        },
+        "translators-copilot.model": {
+          "type": "string",
+          "default": "gpt-3.5-turbo",
+          "description": "Model name selected for inference. Ignorable for local LLM."
+        },
+        "translators-copilot.max_tokens": {
+          "type": "number",
+          "default": 2048,
+          "description": "The maximum number of output tokens for the completion API."
+        },
+        "translators-copilot.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "The randomness level of output generation. A higher value leads to more random outputs."
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {

@@ -22,6 +22,11 @@ import { vectorSearchProvider } from "./vectorSearchProvider";
 import { generateVectors } from "./api/chat/engine/generate";
 import { startProxy } from "./api/chat/proxy";
 import { startChatServer } from "./api/chat/route";
+import { CustomWebviewProvider } from "./providers/customWebviewProvider";
+import {
+  provideInlineCompletionItems,
+  triggerInlineCompletion,
+} from "./providers/inlineCompletionProvider";
 // import { HelloWorldPanel } from "./panels/HelloWorldPanel";
 
 const grammar = require("usfm-grammar");
@@ -132,18 +137,38 @@ const registerCommand = ({
 
 export function activate(context: vscode.ExtensionContext) {
   vectorSearchProvider(context);
-  const sidebarProvider = new SidebarProvider(context.extensionUri);
+  const languages = ["scripture"]; // NOTE: add other languages as needed
+  let disposables = languages.map((language) => {
+    return vscode.languages.registerInlineCompletionItemProvider(language, {
+      provideInlineCompletionItems,
+    });
+  });
+  disposables.forEach((disposable) => context.subscriptions.push(disposable));
+
+  let commandDisposable = vscode.commands.registerCommand(
+    "extension.triggerInlineCompletion",
+    triggerInlineCompletion,
+  );
+
+  context.subscriptions.push(commandDisposable);
+  // const sidebarProvider = new SidebarProvider(context.extensionUri);
   const item = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
-  startProxy();
-  startChatServer();
+  // startProxy();
+  // startChatServer();
   // item.text = "$(beaker) Add Todo";
   // item.command = "vstodo.addTodo";
+  // context.subscriptions.push(
+  //   vscode.window.registerWebviewViewProvider(
+  //     "genesis-translator-sidebar",
+  //     sidebarProvider,
+  //   ),
+  // );
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       "genesis-translator-sidebar",
-      sidebarProvider,
+      new CustomWebviewProvider(context.extensionUri),
     ),
   );
   item.show();

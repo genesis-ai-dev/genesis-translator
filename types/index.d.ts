@@ -1,5 +1,6 @@
 export interface ChatMessage {
-  value: string;
+  role: "system" | "user";
+  content: string;
 }
 
 interface FrontEndMessage {
