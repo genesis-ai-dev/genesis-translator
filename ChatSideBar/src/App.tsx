@@ -41,7 +41,7 @@ function App() {
     if (message) {
       const currentMessageLog = [...messageLog, message];
       setMessageLog(currentMessageLog);
-      console.log({ currentMessageLog });
+      // console.log({ currentMessageLog });
       vscode.postMessage({
         command: "fetch",
         messages: JSON.stringify(currentMessageLog),
@@ -64,11 +64,6 @@ function App() {
       if (!event.data.finished) {
         const messageContent =
           (message?.content || "") + (event.data.text || "");
-        console.log({
-          message,
-          messageContent,
-          "event.data.text": event.data.text,
-        });
         setMessage({
           role: "system",
           content: messageContent,
@@ -99,10 +94,7 @@ function App() {
         width: "100%",
       }}
     >
-      <h1>Chat Window</h1>
       <div className="chat-container" style={{ flex: 1, overflowY: "auto" }}>
-        {/* Chat messages will be displayed here */}
-        {/* This is a placeholder for chat content */}
         <div className="chat-content">
           {messageLog.map((message, index) => (
             <>
