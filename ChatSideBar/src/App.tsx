@@ -91,7 +91,14 @@ function App() {
     },
   );
   return (
-    <main style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <main
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "100%",
+      }}
+    >
       <h1>Chat Window</h1>
       <div className="chat-container" style={{ flex: 1, overflowY: "auto" }}>
         {/* Chat messages will be displayed here */}
@@ -112,22 +119,33 @@ function App() {
         </div>
       </div>
       {/* Input for sending messages */}
-      <div
+      <form
         className="chat-input"
-        style={{ position: "sticky", bottom: 0, backgroundColor: "white" }}
+        style={{
+          position: "sticky",
+          bottom: 0,
+          width: "100%",
+          display: "flex",
+          flexWrap: "nowrap",
+        }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleHowdyClick();
+        }}
       >
         <VSCodeTextField
           placeholder="Type a message..."
-          value={message?.content || ""} // Set the value of the input field to the state variable
+          value={message?.content || ""}
           onChange={(e) =>
             setMessage({
               content: (e.target as HTMLInputElement).value,
               role: "user",
             })
           }
+          style={{ width: "100%" }}
         />
-        <VSCodeButton onClick={() => handleHowdyClick()}>Send</VSCodeButton>
-      </div>
+        <VSCodeButton type="submit">Send</VSCodeButton>
+      </form>
     </main>
   );
 }
